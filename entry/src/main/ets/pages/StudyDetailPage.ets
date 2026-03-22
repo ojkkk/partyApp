@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import { StudyResource, StudyService, ResourceProgress } from "../models/StudyModel";
+﻿import { StudyResource, StudyService, ResourceProgress } from "../models/StudyModel";
 import { ApiResponse } from "../models/UserModel";
 import router from "@ohos.router";
 import promptAction from "@ohos.promptAction";
