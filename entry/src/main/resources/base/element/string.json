@@ -1,0 +1,32 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "label"
+    },
+    {
+      "name": "internet_permission_reason",
+      "value": "用于访问网络获取党建信息"
+    },
+    {
+      "name": "read_media_permission_reason",
+      "value": "用于选择和上传政策相关图片"
+    },
+    {
+      "name": "reason_read_media",
+      "value": "用于访问相册图片"
+    },
+    {
+      "name": "reason_read_image",
+      "value": "用于选择头像"
+    }
+  ]
+}

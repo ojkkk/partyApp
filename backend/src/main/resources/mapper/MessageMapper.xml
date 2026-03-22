@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.partyapp.mapper.MessageMapper">
+    <select id="getChatMessages" resultType="com.example.partyapp.entity.Message">
+        SELECT * FROM messages
+        WHERE (sender_id = #{userId1} AND recipient_id = #{userId2})
+           OR (sender_id = #{userId2} AND recipient_id = #{userId1})
+        ORDER BY created_at ASC
+    </select>
+    
+    <update id="markMessagesAsRead">
+        UPDATE messages
+        SET is_read = true
+        WHERE sender_id = #{senderId} AND recipient_id = #{recipientId} AND is_read = false
+    </update>
+</mapper>

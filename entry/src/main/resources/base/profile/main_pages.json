@@ -1,0 +1,30 @@
+{
+  "src": [
+    "pages/TestPage",
+    "pages/HomePage",
+    "pages/Index",
+    "pages/LoginPage",
+    "pages/RegisterPage",
+    "pages/PolicyPage",
+    "pages/PolicyDetailPage",
+    "pages/PolicyEditPage",
+    "pages/PolicyFavoritePage",
+    "pages/StudyPage",
+    "pages/StudyDetailPage",
+    "pages/StudyEditPage",
+    "pages/StudyStatsPage",
+    "pages/ActivityPage",
+    "pages/ActivityDetailPage",
+    "pages/ActivityEditPage",
+    "pages/ActivityParticipantsPage",
+    "pages/PersonalInfoEditPage",
+    "pages/PasswordChangePage",
+    "pages/LoginLogsPage",
+    "pages/DuesPaymentPage",
+    "pages/AddressBookPage",
+    "pages/UserDetailPage",
+    "pages/ChatPage",
+    "pages/ChatListPage",
+    "pages/BranchManagementPage"
+  ]
+}
