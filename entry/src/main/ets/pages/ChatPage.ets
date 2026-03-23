@@ -2,6 +2,7 @@ import router from '@ohos.router';
 import { UserService, ApiResponse, Message } from '../models/UserModel';
 import { StorageService } from '../services/StorageService';
 import promptAction from '@ohos.promptAction';
+import { AvatarComponent } from '../components/AvatarComponent';
 
 interface UserStatusData {
   isOnline?: boolean;
@@ -332,23 +333,14 @@ export struct ChatPage {
   @Builder
   buildLeftBubble(msg: Message) {
     Row() {
-      if (this.userAvatar) {
-        Image(this.userAvatar)
-          .width(40)
-          .height(40)
-          .borderRadius(20)
-          .margin({ right: 12, left: 16 })
-          .objectFit(ImageFit.Cover);
-      } else {
-        Text(this.userName.charAt(0))
-          .width(40)
-          .height(40)
-          .borderRadius(20)
-          .backgroundColor('#D32F2F')
-          .fontColor('#FFFFFF')
-          .textAlign(TextAlign.Center)
-          .margin({ right: 12, left: 16 });
-      }
+      AvatarComponent({
+        user: {
+          avatar: this.userAvatar,
+          name: this.userName
+        },
+        avatarSize: 40
+      })
+        .margin({ right: 12, left: 16 });
 
       Column() {
         Text(msg.content)

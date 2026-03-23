@@ -6,6 +6,7 @@ import photoPicker from '@ohos.file.picker';
 import { BusinessError } from '@ohos.base';
 import fs from '@ohos.file.fs';
 import common from '@ohos.app.ability.common';
+import { emitter } from '@kit.BasicServicesKit';
 
 // 1. 定义自定义弹窗组件：用于输入URL
 @CustomDialog
@@ -212,6 +213,8 @@ export struct PersonalInfoEditPage {
         email: this.email
       });
       promptAction.showToast({ message: '保存成功', duration: 2000 });
+      // 发送事件通知ProfilePage刷新
+      emitter.emit("refreshProfile", null);
       router.back();
     } catch {
       promptAction.showToast({ message: '保存失败', duration: 2000 });

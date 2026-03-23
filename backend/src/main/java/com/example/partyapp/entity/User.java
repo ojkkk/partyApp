@@ -31,7 +31,7 @@ public class User {
 
     private String email;
 
-    private byte[] avatar;
+    private String avatar;
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;

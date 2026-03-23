@@ -3,6 +3,7 @@ import { ApiResponse, UserInfo } from "../models/UserModel";
 import { StorageService } from '../services/StorageService';
 import router from "@ohos.router";
 import promptAction from "@ohos.promptAction";
+import { AvatarComponent } from '../components/AvatarComponent';
 
 
 class RouterParams {
@@ -47,6 +48,11 @@ struct PolicyDetailPage {
       if (response.code === 200 && response.data) {
         this.policy = response.data;
         await this.loadComments();
+        // 检查当前政策是否在收藏列表中
+        const favoritesResponse = await this.policyService.getFavorites();
+        if (favoritesResponse.code === 200 && favoritesResponse.data) {
+          this.isFavorite = favoritesResponse.data.some(policy => policy.id === this.policyId);
+        }
       }
     } catch (error) {
       console.error("加载政策详情失败:", error);
@@ -63,6 +69,11 @@ struct PolicyDetailPage {
     try {
       const response: ApiResponse<PolicyComment[]> = await this.policyService.getComments(this.policyId);
       if (response.code === 200 && response.data) {
+        console.log('评论数据:', response.data);
+        // 检查每个评论是否有userAvatar字段
+        response.data.forEach((comment, index) => {
+          console.log(`评论${index}的userAvatar:`, comment.userAvatar);
+        });
         this.comments = response.data;
       }
     } catch (error) {
@@ -230,15 +241,7 @@ struct PolicyDetailPage {
                   .fontSize(13)
                   .fontColor("#999999")
                 Blank()
-                Row() {
-                  Image("https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=view%20icon&image_size=square")
-                    .width(16)
-                    .height(16)
-                    .margin({ right: 4 })
-                  Text(Math.floor(Math.random() * 10000) + '')
-                    .fontSize(12)
-                    .fontColor('#999999')
-                }
+                
               }
               .width('100%')
               .margin({ left: 24, right: 16, bottom: 20 })
@@ -305,10 +308,13 @@ struct PolicyDetailPage {
                   ForEach(this.comments, (comment: PolicyComment) => {
                     Column() {
                       Row() {
-                        Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20avatar&image_size=square')
-                          .width(36)
-                          .height(36)
-                          .borderRadius(18)
+                        AvatarComponent({
+                          user: {
+                            avatar: comment.userAvatar || '',
+                            name: comment.userName
+                          },
+                          avatarSize: 36
+                        })
                           .margin({ right: 12 })
                         Column() {
                           Row() {
@@ -325,7 +331,7 @@ struct PolicyDetailPage {
                             .fontSize(14)
                             .lineHeight(20)
                             .fontColor('#333333')
-                          Text(comment.createdAt)
+                          Text(comment.createdAt.replace('T', ' '))
                             .fontSize(12)
                             .fontColor('#999999')
                             .margin({ top: 4 })
@@ -357,7 +363,6 @@ struct PolicyDetailPage {
         .backgroundColor("#F2F2F2")
         .edgeEffect(EdgeEffect.Spring)
 
-        if (!this.canManage()) {
           Row() {
             TextInput({
               text: this.commentContent,
@@ -377,30 +382,34 @@ struct PolicyDetailPage {
             })
 
             Column() {
-              Image(this.isFavorite 
-                ? 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=favorite%20icon%20red&image_size=square'
-                : 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=favorite%20icon%20gray&image_size=square')
+              Image(this.isFavorite ? $rawfile('已收藏.png') : $rawfile('未收藏.png'))
                 .width(22)
                 .height(22)
+                .margin({bottom:1})
               Text(this.isFavorite ? '已收藏' : '收藏')
                 .fontSize(11)
                 .fontColor(this.isFavorite ? '#D32F2F' : '#666666')
                 .margin({ top: 2 })
             }
-            .margin({ right: 24 })
+            .width(50) // 【关键修改】固定宽度，防止抖动
+            .justifyContent(FlexAlign.Center) // 内容居中
             .onClick(() => {
               this.toggleFavorite();
             })
 
             Column() {
-              Image("https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=share%20icon&image_size=square")
+              Image($rawfile('分享(政策).png'))
                 .width(22)
                 .height(22)
+                .margin({bottom:1})
               Text('分享')
                 .fontSize(11)
                 .fontColor('#666666')
                 .margin({ top: 2 })
             }
+            .width(50) // 【关键修改】固定宽度
+            .justifyContent(FlexAlign.Center) // 内容居中
+
           }
           .width("100%")
           .height(60)
@@ -411,7 +420,6 @@ struct PolicyDetailPage {
           .borderWidth({ top: 1 })
           .borderColor({ top: "#EAEAEA" })
           .shadow({ radius: 4, color: 'rgba(0,0,0,0.05)', offsetY: -2 })
-        }
       }
     }
     .width("100%")

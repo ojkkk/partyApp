@@ -297,6 +297,7 @@ public class ActivityService {
                 participant.put("name", user.getName());
                 participant.put("phone", user.getPhone());
                 participant.put("branch", user.getBranch());
+                participant.put("avatar", user.getAvatar());
             }
             
             return participant;

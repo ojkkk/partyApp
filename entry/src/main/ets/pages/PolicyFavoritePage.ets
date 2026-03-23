@@ -22,7 +22,14 @@ export struct PolicyFavoritePage {
     try {
       const response = await this.policyService.getFavorites();
       if (response.code === 200 && response.data) {
-        this.policies = response.data;
+        // 为每个政策设置初始收藏状态为true
+        const policiesWithFavorite: Policy[] = [];
+        for (let i = 0; i < response.data.length; i++) {
+          const policy = response.data[i];
+          policy.isFavorite = true;
+          policiesWithFavorite.push(policy);
+        }
+        this.policies = policiesWithFavorite;
       }
     } catch (error) {
       console.error('加载收藏失败:', error);
@@ -38,12 +45,55 @@ export struct PolicyFavoritePage {
   async toggleFavorite(id: string) {
     try {
       const response = await this.policyService.toggleFavorite(id);
+      console.log('收藏响应:', response);
       if (response.code === 200) {
+        // 确保response.data是布尔值
+        const isFavorite = response.data === true;
+        console.log('新的收藏状态:', isFavorite);
+        
+        // 更新本地收藏状态
+        const newPolicies: Policy[] = [];
+        for (let i = 0; i < this.policies.length; i++) {
+          const policy = this.policies[i];
+          if (policy.id === id) {
+            // 创建新对象并设置收藏状态
+            const updatedPolicy: Policy = {
+              id: policy.id,
+              title: policy.title,
+              content: policy.content,
+              type: policy.type,
+              publishDate: policy.publishDate,
+              imageUrl: policy.imageUrl,
+              videoUrl: policy.videoUrl,
+              viewCount: policy.viewCount,
+              createdBy: policy.createdBy,
+              createdAt: policy.createdAt,
+              updatedAt: policy.updatedAt,
+              isFavorite: isFavorite
+            };
+            newPolicies.push(updatedPolicy);
+          } else {
+            newPolicies.push(policy);
+          }
+        }
+        
+        console.log('更新前的policies:', this.policies);
+        console.log('更新后的policies:', newPolicies);
+        
+        // 重新赋值触发UI更新
+        this.policies = newPolicies;
+        
         promptAction.showToast({
-          message: response.data ? '已收藏' : '已取消收藏',
+          message: isFavorite ? '已收藏' : '已取消收藏',
           duration: 2000
         });
-        await this.loadFavorites();
+        
+        // 如果取消收藏，从列表中移除
+        if (!isFavorite) {
+          setTimeout(() => {
+            this.loadFavorites();
+          }, 500);
+        }
       }
     } catch (error) {
       console.error('操作失败:', error);
@@ -102,6 +152,7 @@ export struct PolicyFavoritePage {
                 Image(policy.imageUrl)
                   .width('100%')
                   .height(160)
+                  .borderRadius({topLeft:12,topRight:12})
                 Text(policy.title)
                   .fontSize(16)
                   .fontWeight(500)
@@ -110,25 +161,29 @@ export struct PolicyFavoritePage {
                   Text(policy.publishDate)
                     .fontSize(12)
                     .fontColor('#999999')
+                    .margin({left:8})
                   Blank()
                   Row() {
-                    Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=favorite%20icon%20red&image_size=square')
+                    Image(policy.isFavorite ? $rawfile('已收藏.png') : $rawfile('未收藏.png'))
                       .width(20)
                       .height(20)
-                      .margin({ right: 16 })
+                      .margin({ right: 12 })
                       .onClick(() => {
                         this.toggleFavorite(policy.id);
                       })
-                    Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=share%20icon&image_size=square')
-                      .width(20)
+                    Image($rawfile('分享(政策).png'))
+                      .width(22)
+                      .height(22)
+                      .margin({top:2.5,right:12})
                   }
                 }
                 .width('100%')
                 .margin({ top: 8, left: 16, right: 16, bottom: 16 })
               }
-              .width('100%')
+              .width('97%')
               .backgroundColor('#FFFFFF')
-              .margin({ bottom: 12 })
+              .margin({ left: '1.5%', right: '1.5%', bottom: 8 })
+              .borderRadius(12)
               .onClick(() => {
                 router.pushUrl({
                   url: 'pages/PolicyDetailPage',

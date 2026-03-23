@@ -30,6 +30,7 @@ export interface ActivityParticipant {
   name?: string;
   phone?: string;
   branch?: string;
+  avatar?: string;
 }
 
 export interface ActivityCreate {

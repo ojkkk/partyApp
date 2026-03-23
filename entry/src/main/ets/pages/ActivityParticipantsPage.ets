@@ -2,6 +2,7 @@ import { ActivityParticipant, ActivityService } from '../models/ActivityModel';
 import { ApiResponse } from '../models/UserModel';
 import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
+import { AvatarComponent } from '../components/AvatarComponent';
 
 @Entry
 @Component
@@ -108,10 +109,13 @@ export struct ActivityParticipantsPage {
               ListItem() {
                 Column() {
                   Row() {
-                    Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=portrait%20of%20asian%20party%20member&image_size=square')
-                      .width(48)
-                      .height(48)
-                      .borderRadius(24)
+                    AvatarComponent({
+                      user: {
+                        avatar: participant.avatar || '',
+                        name: participant.name || participant.username || '未知'
+                      },
+                      avatarSize: 48
+                    })
                     Column() {
                       Row() {
                         Text(participant.name || participant.username || '未知')
@@ -142,7 +146,7 @@ export struct ActivityParticipantsPage {
                       .width('100%')
                       .margin({ bottom: 4 })
                       Row() {
-                        Text(`报名时间: ${participant.registeredAt}`)
+                        Text(`报名时间: ${participant.registeredAt.replace('T', ' ')}`)
                           .fontSize(12)
                           .fontColor('#999999')
                       }
@@ -150,7 +154,7 @@ export struct ActivityParticipantsPage {
                       .margin({ bottom: 4 })
                       if (participant.isCheckedIn && participant.checkInTime) {
                         Row() {
-                          Text(`签到时间: ${participant.checkInTime}`)
+                          Text(`签到时间: ${participant.checkInTime.replace('T', ' ')}`)
                             .fontSize(12)
                             .fontColor('#999999')
                         }

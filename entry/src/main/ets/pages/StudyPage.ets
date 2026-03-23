@@ -254,7 +254,9 @@ export struct StudyPage {
                       .fontWeight(500)
                       .fontColor('#333333')
                       .margin({ bottom: '8px' })
-                      .maxLines(2)
+                      .maxLines(3)
+                      .width('100%')
+                      .textAlign(TextAlign.Center)
                       .textOverflow({ overflow: TextOverflow.Ellipsis })
                     Row() {
                       Text(`预计: ${resource.duration}分钟`)
@@ -280,13 +282,7 @@ export struct StudyPage {
                             params: { resourceId: resource.id }
                           });
                         })
-                      Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=favorite%20icon%20gray&image_size=square')
-                        .width('24px')
-                        .height('24px')
-                        .margin({ left: '16px' })
-                        .onClick(() => {
-                          this.toggleFavorite(resource.id);
-                        })
+
                     }
                   }
                   .flexGrow(1)

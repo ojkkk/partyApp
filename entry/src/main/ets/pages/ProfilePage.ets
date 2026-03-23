@@ -2,6 +2,8 @@ import router from '@ohos.router';
 import { StorageService } from '../services/StorageService';
 import { UserService, UserInfo, ApiResponse, DuesStats, DuesPayment, LoginLog, UpdateInfo } from '../models/UserModel';
 import promptAction from '@ohos.promptAction';
+import { AvatarComponent } from '../components/AvatarComponent';
+import { emitter } from '@kit.BasicServicesKit';
 
 
 @Component
@@ -16,6 +18,24 @@ export struct ProfilePage {
   @State isLoadingDues: boolean = false;
 
   async aboutToAppear() {
+    await this.loadUserInfo();
+    await this.loadDuesStats();
+    
+    // 添加事件监听器，监听个人信息更新
+    emitter.on("refreshProfile", async () => {
+      console.info("✅ 从个人信息编辑页返回，刷新个人信息");
+      await this.loadUserInfo();
+      await this.loadDuesStats();
+    });
+  }
+
+  aboutToDisappear() {
+    // 移除事件监听器
+    emitter.off("refreshProfile");
+  }
+
+  // 页面显示时重新加载数据
+  async onPageShow() {
     await this.loadUserInfo();
     await this.loadDuesStats();
   }
@@ -227,11 +247,26 @@ export struct ProfilePage {
     Column() {
       // 顶部个人信息区域
       Column() {
-        Image(this.user?.avatar || 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20avatar%20placeholder%20red%20theme&image_size=square')
-          .width('100px')
-          .height('100px')
-          .borderRadius('50px')
-          .margin({ bottom: '16px' })
+        if (this.user) {
+          AvatarComponent({
+            user: {
+              avatar: this.user.avatar,
+              name: this.user.name
+            },
+            avatarSize: 100
+          })
+            .margin({ bottom: '16px' })
+        } else {
+          Text('党')
+            .width(100)
+            .height(100)
+            .borderRadius(50)
+            .backgroundColor('#D32F2F')
+            .fontColor('#fff')
+            .fontSize(40)
+            .textAlign(TextAlign.Center)
+            .margin({ bottom: '16px' })
+        }
         Text(this.user?.name || '党员同志')
           .fontSize(20)
           .fontWeight(700)
@@ -292,7 +327,7 @@ export struct ProfilePage {
                     Text('待缴金额:')
                       .fontSize(14)
                       .fontColor('#666666')
-                    Text(`¥${this.duesStats.overdueAmount || 0}`)
+                    Text(`¥${this.duesStats.pendingAmount || 0}`)
                       .fontSize(14)
                       .fontColor('#D32F2F')
                       .fontWeight(700)

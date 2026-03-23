@@ -2,6 +2,7 @@ import router from '@ohos.router';
 import { UserService, ApiResponse, User } from '../models/UserModel';
 import promptAction from '@ohos.promptAction';
 import { pinyin } from 'pinyin-pro';
+import { AvatarComponent } from '../components/AvatarComponent';
 
 // 🔧 优化1：使用严格的联合类型，提升代码安全性
 interface ViewItem {
@@ -55,24 +56,14 @@ export struct AddressBookPage {
   @Builder
   ContactItem(user: User) {
     Row() {
-      if (user.avatar) {
-        Image(user.avatar)
-          .width(60)
-          .height(60)
-          .borderRadius(30)
-          .margin({ right: 12 })
-          .objectFit(ImageFit.Cover);
-      } else {
-        Text(user.name.charAt(0))
-          .width(60)
-          .height(60)
-          .borderRadius(30)
-          .backgroundColor('#D32F2F')
-          .fontColor('#fff')
-          .fontSize(24)
-          .textAlign(TextAlign.Center)
-          .margin({ right: 12 });
-      }
+      AvatarComponent({
+        user: {
+          avatar: user.avatar,
+          name: user.name
+        },
+        avatarSize: 60
+      })
+        .margin({ right: 12 });
       Column() {
         Text(user.name)
           .fontSize(16)

@@ -244,7 +244,7 @@ export struct BranchManagementPage {
                   .fontColor(TEXT_MAIN)
                   .width('100%')
                   .margin({ bottom: 4 })
-                Text(message.createdAt)
+                Text(message.createdAt.replace('T', ' '))
                   .fontSize(12)
                   .fontColor(TEXT_GRAY)
               }

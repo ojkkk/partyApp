@@ -20,7 +20,8 @@ public class DuesService {
     // 获取用户的党费统计信息
     public DuesStats getDuesStats(String userId) {
         LambdaQueryWrapper<DuesPayment> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(DuesPayment::getUserId, userId);
+        wrapper.eq(DuesPayment::getUserId, userId)
+               .orderByDesc(DuesPayment::getCreatedAt); // 按生成日期降序排序
         List<DuesPayment> payments = duesMapper.selectList(wrapper);
 
         BigDecimal totalDue = BigDecimal.ZERO;
@@ -49,39 +50,81 @@ public class DuesService {
     // 缴纳党费
     @Transactional
     public boolean payDues(String userId, LocalDate month, BigDecimal amount, String method) {
+        // 先尝试按日期和金额查询
         LambdaQueryWrapper<DuesPayment> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(DuesPayment::getUserId, userId)
-               .eq(DuesPayment::getPaymentMonth, month);
-        DuesPayment payment = duesMapper.selectOne(wrapper);
+               .eq(DuesPayment::getAmount, amount);
+        
+        // 尝试按LocalDate查询
+        DuesPayment payment = duesMapper.selectOne(wrapper.eq(DuesPayment::getPaymentMonth, month));
+        
+        // 如果没找到，尝试获取用户的所有待缴党费，然后找到匹配的
+        if (payment == null) {
+            wrapper.clear();
+            wrapper.eq(DuesPayment::getUserId, userId)
+                   .eq(DuesPayment::getPaymentStatus, "pending")
+                   .eq(DuesPayment::getAmount, amount);
+            
+            List<DuesPayment> payments = duesMapper.selectList(wrapper);
+            for (DuesPayment p : payments) {
+                if (p.getPaymentMonth().equals(month)) {
+                    payment = p;
+                    break;
+                }
+            }
+        }
 
         if (payment != null) {
             payment.setPaymentStatus("paid");
             payment.setPaymentMethod(method);
             payment.setPaymentDate(LocalDateTime.now());
+            payment.setUpdatedAt(LocalDateTime.now());
             duesMapper.updateById(payment);
             return true;
         }
         return false;
     }
 
-    // 为用户生成当月的党费记录
+    // 为用户生成每日的党费记录
     @Transactional
-    public void generateMonthlyDues(String userId) {
-        LocalDate currentMonth = LocalDate.now().withDayOfMonth(1);
+    public void generateDailyDues(String userId) {
+        LocalDate today = LocalDate.now();
         
         LambdaQueryWrapper<DuesPayment> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(DuesPayment::getUserId, userId)
-               .eq(DuesPayment::getPaymentMonth, currentMonth);
+               .eq(DuesPayment::getPaymentMonth, today);
         if (duesMapper.selectCount(wrapper) == 0) {
             DuesPayment payment = new DuesPayment();
             payment.setUserId(userId);
-            payment.setPaymentMonth(currentMonth);
-            payment.setAmount(new BigDecimal("10.00")); // 默认每月10元
-            payment.setPaymentStatus("overdue"); // 默认欠费状态
+            payment.setPaymentMonth(today);
+            payment.setAmount(new BigDecimal("0.60")); // 每天0.6元
+            payment.setPaymentStatus("pending"); // 默认待支付状态
             payment.setCreatedAt(LocalDateTime.now());
             payment.setUpdatedAt(LocalDateTime.now());
             duesMapper.insert(payment);
         }
+    }
+    
+    // 为用户生成当月的党费记录（保留旧方法，确保兼容性）
+    @Transactional
+    public void generateMonthlyDues(String userId) {
+        generateDailyDues(userId);
+    }
+    
+    // 批量缴纳党费
+    @Transactional
+    public boolean payMultipleDues(String userId, List<String> paymentIds, String method) {
+        for (String paymentId : paymentIds) {
+            DuesPayment payment = duesMapper.selectById(paymentId);
+            if (payment != null && payment.getUserId().equals(userId)) {
+                payment.setPaymentStatus("paid");
+                payment.setPaymentMethod(method);
+                payment.setPaymentDate(LocalDateTime.now());
+                payment.setUpdatedAt(LocalDateTime.now());
+                duesMapper.updateById(payment);
+            }
+        }
+        return true;
     }
 
     // 内部类，用于返回党费统计信息

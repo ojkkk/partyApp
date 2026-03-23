@@ -1,6 +1,7 @@
 import router from '@ohos.router';
 import { UserService, ApiResponse, User } from '../models/UserModel';
 import promptAction from '@ohos.promptAction';
+import { AvatarComponent } from '../components/AvatarComponent';
 
 @Entry
 @Component
@@ -77,23 +78,14 @@ export struct UserDetailPage {
       } else if (this.user) {
         Column() {
           // 头像
-          if (this.user.avatar) {
-            Image(this.user.avatar)
-              .width(120)
-              .height(120)
-              .borderRadius(60)
-              .margin({ top: 40, bottom: 20 });
-          } else {
-            Text(this.user.name.charAt(0))
-              .width(120)
-              .height(120)
-              .borderRadius(60)
-              .backgroundColor('#D32F2F')
-              .fontColor('#fff')
-              .fontSize(48)
-              .textAlign(TextAlign.Center)
-              .margin({ top: 40, bottom: 20 });
-          }
+          AvatarComponent({
+            user: {
+              avatar: this.user.avatar,
+              name: this.user.name
+            },
+            avatarSize: 120
+          })
+            .margin({ top: 40, bottom: 20 });
 
           // 姓名
           Text(this.user.name)

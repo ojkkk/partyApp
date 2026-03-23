@@ -220,6 +220,7 @@ export struct StudyStatsPage {
         }
         .layoutWeight(1)
         .backgroundColor('#F5F5F5')
+        .align(Alignment.TopStart)
       }
     }
     .width('100%')

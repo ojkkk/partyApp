@@ -3,6 +3,7 @@ import { Message as UserMessage } from '../models/UserModel';
 import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
 import { emitter } from '@kit.BasicServicesKit';
+import { AvatarComponent } from '../components/AvatarComponent';
 // 标准党旗红主色，符合党建应用规范
 const PRIMARY_COLOR: string = '#C8102E';
 const BG_COLOR: string = '#F5F7FA';
@@ -70,23 +71,13 @@ export struct ChatListPage {
   ChatSessionCard(session: ChatSession) {
     Row() {
       // 头像
-      if (session.userAvatar) {
-        Image(session.userAvatar)
-          .width(56)
-          .height(56)
-          .borderRadius(28)
-          .objectFit(ImageFit.Cover)
-      } else {
-        Text(session.userName.charAt(0))
-          .width(56)
-          .height(56)
-          .borderRadius(28)
-          .backgroundColor(PRIMARY_COLOR)
-          .fontColor('#FFFFFF')
-          .textAlign(TextAlign.Center)
-          .fontSize(20)
-          .fontWeight(FontWeight.Medium)
-      }
+      AvatarComponent({
+        user: {
+          avatar: session.userAvatar,
+          name: session.userName
+        },
+        avatarSize: 56
+      })
 
       // 会话信息
       Column() {
@@ -150,7 +141,7 @@ export struct ChatListPage {
       // 顶部导航栏
       Row() {
         Button() {
-          Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=back%20icon%20black&image_size=square')
+          Image($rawfile('返回.png'))
             .width(24)
             .height(24)
         }

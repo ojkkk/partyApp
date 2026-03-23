@@ -77,6 +77,11 @@ export interface PayDuesRequest {
   method: 'online' | 'offline';
 }
 
+export interface PayMultipleDuesRequest {
+  paymentIds: string[];
+  method: 'online' | 'offline';
+}
+
 export interface ChangePasswordRequest {
   oldPassword: string;
   newPassword: string;
@@ -203,6 +208,14 @@ export class UserService {
       method
     };
     return await NetworkService.post<ApiResponse<boolean>>('/api/dues/pay', request);
+  }
+
+  async payMultipleDues(paymentIds: string[], method: 'online' | 'offline'): Promise<ApiResponse<boolean>> {
+    const request: PayMultipleDuesRequest = {
+      paymentIds,
+      method
+    };
+    return await NetworkService.post<ApiResponse<boolean>>('/api/dues/pay-multiple', request);
   }
 
   // 用户相关方法

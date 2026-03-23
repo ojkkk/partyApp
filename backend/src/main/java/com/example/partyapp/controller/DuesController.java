@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/dues")
@@ -51,6 +52,40 @@ public class DuesController {
             return ApiResponse.success(true);
         } catch (Exception e) {
             return ApiResponse.error("生成党费记录失败");
+        }
+    }
+    
+    // 批量缴纳党费
+    @PostMapping("/pay-multiple")
+    public ApiResponse<Boolean> payMultipleDues(@RequestBody PayMultipleDuesRequest request) {
+        try {
+            String userId = UserContext.getUserId();
+            boolean result = duesService.payMultipleDues(userId, request.getPaymentIds(), request.getMethod());
+            return ApiResponse.success(result);
+        } catch (Exception e) {
+            return ApiResponse.error("批量缴纳党费失败");
+        }
+    }
+    
+    // 内部类，用于批量缴纳党费请求
+    private static class PayMultipleDuesRequest {
+        private List<String> paymentIds;
+        private String method;
+        
+        public List<String> getPaymentIds() {
+            return paymentIds;
+        }
+        
+        public void setPaymentIds(List<String> paymentIds) {
+            this.paymentIds = paymentIds;
+        }
+        
+        public String getMethod() {
+            return method;
+        }
+        
+        public void setMethod(String method) {
+            this.method = method;
         }
     }
 }

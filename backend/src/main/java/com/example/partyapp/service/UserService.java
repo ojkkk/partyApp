@@ -100,7 +100,7 @@ public class UserService {
         try {
             User user = userMapper.selectById(id);
             if (user != null) {
-                user.setAvatar(avatarUrl.getBytes());
+                user.setAvatar(avatarUrl);
                 user.setUpdatedAt(LocalDateTime.now());
                 userMapper.updateById(user);
                 return true;

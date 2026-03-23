@@ -7,6 +7,7 @@ import { StudyResource, StudyService } from '../models/StudyModel';
 import { Activity, ActivityService } from '../models/ActivityModel';
 import { ChatService } from '../models/ChatModel';
 import { emitter } from '@kit.BasicServicesKit'; // 加这行
+import { AvatarComponent } from '../components/AvatarComponent';
 
 // 显式声明接口，符合ArkTS严格类型规范
 interface SearchResults {
@@ -255,23 +256,13 @@ export struct HomePage {
   @Builder
   UserCard(user: UserInfo) {
     Row() {
-      if (user.avatar) {
-        Image(user.avatar)
-          .width(60)
-          .height(60)
-          .borderRadius(30)
-          .objectFit(ImageFit.Cover)
-      } else {
-        Text(user.name.charAt(0))
-          .width(60)
-          .height(60)
-          .borderRadius(30)
-          .backgroundColor(PRIMARY_COLOR)
-          .fontColor('#FFFFFF')
-          .textAlign(TextAlign.Center)
-          .fontSize(22)
-          .fontWeight(FontWeight.Medium)
-      }
+      AvatarComponent({
+        user: {
+          avatar: user.avatar,
+          name: user.name
+        },
+        avatarSize: 60
+      })
 
       Column() {
         Text(user.name)
@@ -344,7 +335,7 @@ export struct HomePage {
       // ===================== 顶部固定搜索栏 =====================
       Row() {
         Row() {
-          Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=search%20icon%20gray%20color&image_size=square')
+          Image($rawfile("搜索.png"))
             .width(20)
             .height(20)
             .margin({ left: 16 })
@@ -375,14 +366,14 @@ export struct HomePage {
         Stack() {
           // 核心修复：移除了错误的 setTimeout 逻辑
           Button() {
-            Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chat%20bubble%20icon%20white%20color&image_size=square')
+            Image($rawfile("邮件.png"))
               .width(24)
               .height(24)
           }
           .width(44)
           .height(44)
           .flexShrink(0)
-          .backgroundColor(PRIMARY_COLOR)
+          .backgroundColor(BG_COLOR)
           .borderRadius(22)
           .onClick(() => {
             // 只负责跳转，刷新逻辑交给 onPageShow
@@ -613,7 +604,7 @@ export struct HomePage {
                 this.MenuItem(
                   '党费缴纳',
                   $rawfile("党费管理.png"),
-                  () => promptAction.showToast({ message: '功能开发中', duration: 2000 })
+                  () => router.pushUrl({ url: 'pages/DuesPaymentPage' })
                 )
               }
 
@@ -718,12 +709,13 @@ export struct HomePage {
                 .width('100%')
                 .padding({ left: 16, right: 16, top: 10, bottom: 10 })
                 .margin({ left: 16, right: 16, bottom: 8 })
-                .borderRadius(12)
+                .borderRadius(16)
                 .backgroundColor(CARD_BG)
                 .onClick(() => {
                   router.pushUrl({ url: 'pages/PolicyDetailPage', params: { policyId: policy.id } });
                 })
               })
+
             }
           }
           .padding({ bottom: NAV_BAR_HEIGHT + 15 })

@@ -13,6 +13,7 @@ export interface Policy {
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
+  isFavorite?: boolean;
 }
 
 export interface PolicyComment {
@@ -23,6 +24,7 @@ export interface PolicyComment {
   createdAt: string;
   userName: string;
   userBranch: string;
+  userAvatar?: string;
 }
 
 export interface CommentRequest {

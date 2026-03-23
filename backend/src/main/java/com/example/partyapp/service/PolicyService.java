@@ -101,7 +101,9 @@ public class PolicyService {
         User user = userMapper.selectById(userId);
         String userName = user != null ? user.getName() : "未知用户";
         String userBranch = user != null ? user.getBranch() : "未知支部";
-        return new PolicyCommentDTO(comment, userName, userBranch);
+        String userAvatar = user != null ? user.getAvatar() : null;
+        System.out.println("用户头像: " + userAvatar);
+        return new PolicyCommentDTO(comment, userName, userBranch, userAvatar);
     }
 
     public List<PolicyCommentDTO> getComments(String policyId) {
@@ -114,7 +116,9 @@ public class PolicyService {
             User user = userMapper.selectById(comment.getUserId());
             String userName = user != null ? user.getName() : "未知用户";
             String userBranch = user != null ? user.getBranch() : "未知支部";
-            return new PolicyCommentDTO(comment, userName, userBranch);
+            String userAvatar = user != null ? user.getAvatar() : null;
+            System.out.println("评论用户头像: " + userAvatar);
+            return new PolicyCommentDTO(comment, userName, userBranch, userAvatar);
         }).toList();
     }
 }

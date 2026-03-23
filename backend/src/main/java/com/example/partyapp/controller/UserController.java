@@ -40,10 +40,7 @@ public class UserController {
             this.registrationDate = user.getRegistrationDate() != null ? user.getRegistrationDate().toString() : null;
             this.phone = user.getPhone();
             this.email = user.getEmail();
-            // 将byte[]类型的avatar转换为字符串
-            if (user.getAvatar() != null) {
-                this.avatar = new String(user.getAvatar());
-            }
+            this.avatar = user.getAvatar();
         }
 
         // Getters and setters

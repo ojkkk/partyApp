@@ -14,8 +14,9 @@ public class PolicyCommentDTO {
     private LocalDateTime createdAt;
     private String userName;
     private String userBranch;
+    private String userAvatar;
 
-    public PolicyCommentDTO(PolicyComment comment, String userName, String userBranch) {
+    public PolicyCommentDTO(PolicyComment comment, String userName, String userBranch, String userAvatar) {
         this.id = comment.getId();
         this.policyId = comment.getPolicyId();
         this.userId = comment.getUserId();
@@ -23,5 +24,6 @@ public class PolicyCommentDTO {
         this.createdAt = comment.getCreatedAt();
         this.userName = userName;
         this.userBranch = userBranch;
+        this.userAvatar = userAvatar;
     }
 }

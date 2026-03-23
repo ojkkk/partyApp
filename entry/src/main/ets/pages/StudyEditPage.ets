@@ -106,7 +106,7 @@ export struct StudyEditPage {
         }
         .width('100%')
         .layoutWeight(1)
-        .justifyContent(1)
+        .justifyContent(FlexAlign.Center)
       } else {
         Scroll() {
           Column() {
@@ -116,9 +116,10 @@ export struct StudyEditPage {
                 .fontColor('#333333')
                 .width('100%')
                 .margin({ bottom: 8 })
-              TextInput({ text: this.title, placeholder: '请输入标题' })
+              // 【关键修改 1】标题改为 TextArea，删除 multiline
+              TextArea({ text: this.title, placeholder: '请输入标题' })
                 .width('100%')
-                .height(48)
+                .height(80)
                 .onChange((value: string) => {
                   this.title = value;
                 })
@@ -150,7 +151,7 @@ export struct StudyEditPage {
                   })
                 }
               }
-              .scrollable(2)
+              .scrollable(ScrollDirection.Horizontal) // 【优化】使用枚举代替 magic number
             }
             .width('100%')
             .padding(16)
@@ -166,6 +167,7 @@ export struct StudyEditPage {
               TextInput({ text: this.duration.toString(), placeholder: '请输入学习时长' })
                 .width('100%')
                 .height(48)
+                .type(InputType.Number) // 【优化】限定输入类型为数字
                 .onChange((value: string) => {
                   this.duration = parseInt(value) || 0;
                 })
@@ -181,16 +183,16 @@ export struct StudyEditPage {
                 .fontColor('#333333')
                 .width('100%')
                 .margin({ bottom: 8 })
-              
+
               if (this.imageUrl) {
                 Image(this.imageUrl)
                   .width('100%')
                   .height(200)
-                  .objectFit(3)
+                  .objectFit(ImageFit.Cover) // 【优化】使用枚举代替 magic number
                   .borderRadius(8)
                   .margin({ bottom: 12 })
               }
-              
+
               TextInput({ text: this.imageUrl, placeholder: '请输入图片URL地址' })
                 .width('100%')
                 .height(48)
@@ -227,9 +229,10 @@ export struct StudyEditPage {
                 .fontColor('#333333')
                 .width('100%')
                 .margin({ bottom: 8 })
-              TextInput({ text: this.content, placeholder: '请输入内容' })
+              // 【关键修改 2】内容也改为 TextArea 以支持多行输入
+              TextArea({ text: this.content, placeholder: '请输入内容' })
                 .width('100%')
-                .height(200)
+                .height(100)
                 .onChange((value: string) => {
                   this.content = value;
                 })

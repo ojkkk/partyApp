@@ -10,7 +10,7 @@ import com.example.partyapp.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import java.util.Base64;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -44,12 +44,6 @@ public class AuthController {
             String userId = UserContext.getUserId();
             User user = authService.getUserById(userId);
             
-            // 将byte[]类型的avatar转换为Base64字符串
-            String avatarStr = null;
-            if (user.getAvatar() != null) {
-                avatarStr = Base64.getEncoder().encodeToString(user.getAvatar());
-            }
-
             LoginResponse.UserInfo userInfo = new LoginResponse.UserInfo(
                 user.getId(),
                 user.getUsername(),
@@ -61,7 +55,7 @@ public class AuthController {
                 user.getRegistrationDate() != null ? user.getRegistrationDate().toString() : null,
                 user.getPhone(),
                 user.getEmail(),
-                avatarStr
+                user.getAvatar()
             );
             return ApiResponse.success(userInfo);
         } catch (Exception e) {

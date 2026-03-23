@@ -1,10 +1,7 @@
-﻿import { StudyResource, StudyService, ResourceProgress } from "../models/StudyModel";
+import { StudyResource, StudyService, ResourceProgress } from "../models/StudyModel";
 import { ApiResponse } from "../models/UserModel";
 import router from "@ohos.router";
 import promptAction from "@ohos.promptAction";
-
-
-
 
 // 放在所有 import 下面
 // 定义我们需要的上下文类型（彻底避免 any）
@@ -24,7 +21,6 @@ interface ShareContext {
 interface ComponentWithContext {
   context?: ShareContext;
 }
-
 
 //////
 class RouterParams {
@@ -48,6 +44,7 @@ struct StudyDetailPage {
   @State totalStudyDuration: number = 0; // 总学习时长（秒）
   private timer: number | null = null;
   @State isShowShareDialog: boolean = false; // 控制模拟分享面板显示
+  @State isFavorite: boolean = false; // 收藏状态
 
   async aboutToAppear() {
     const paramsObj = router.getParams() as Object;
@@ -65,8 +62,14 @@ struct StudyDetailPage {
   }
 
   startTimer() {
+    let seconds = 0;
     this.timer = setInterval(() => {
       this.studyDuration++;
+      seconds++;
+      // 每60秒更新一次本地进度条
+      if (seconds % 60 === 0) {
+        this.updateLocalProgress();
+      }
     }, 1000);
   }
 
@@ -84,6 +87,8 @@ struct StudyDetailPage {
       if (response.code === 200 && response.data) {
         this.resource = response.data;
         await this.loadResourceProgress();
+        // 检查资源是否被收藏
+        await this.checkFavoriteStatus();
       }
     } catch (error) {
       console.error("加载学习资源失败:", error);
@@ -93,6 +98,19 @@ struct StudyDetailPage {
       });
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  async checkFavoriteStatus() {
+    try {
+      // 获取用户的收藏列表
+      const favoritesResponse = await this.studyService.getFavorites();
+      if (favoritesResponse.code === 200 && favoritesResponse.data) {
+        // 检查当前资源是否在收藏列表中
+        this.isFavorite = favoritesResponse.data.some(resource => resource.id === this.resourceId);
+      }
+    } catch (error) {
+      console.error("检查收藏状态失败:", error);
     }
   }
 
@@ -109,15 +127,22 @@ struct StudyDetailPage {
     }
   }
 
+  // 更新本地进度条，不发送数据到后端
+  updateLocalProgress() {
+    // 计算当前资源的学习进度，基于学习时长和预计时长
+    if (this.resource) {
+      const expectedDuration = this.resource.duration * 60; // 转换为秒
+      if (expectedDuration > 0) {
+        this.currentProgress = Math.min(100, Math.floor((this.studyDuration / expectedDuration) * 100));
+      }
+    }
+  }
+
+  // 发送学习时长数据到后端，只在页面关闭时调用
   async updateProgress() {
     try {
-      // 计算当前资源的学习进度，基于学习时长和预计时长
-      if (this.resource) {
-        const expectedDuration = this.resource.duration * 60; // 转换为秒
-        if (expectedDuration > 0) {
-          this.currentProgress = Math.min(100, Math.floor((this.studyDuration / expectedDuration) * 100));
-        }
-      }
+      // 先更新本地进度条
+      this.updateLocalProgress();
       // 发送本次学习的时长增量，而不是累计时长
       const sessionDuration = this.studyDuration - this.initialStudyDuration;
       await this.studyService.updateProgress(this.resourceId, this.currentProgress, sessionDuration > 0 ? sessionDuration : 0);
@@ -130,8 +155,10 @@ struct StudyDetailPage {
     try {
       const response = await this.studyService.toggleFavorite(this.resourceId);
       if (response.code === 200) {
+        // 更新收藏状态
+        this.isFavorite = response.data || false;
         promptAction.showToast({
-          message: response.data ? "已收藏" : "已取消收藏",
+          message: this.isFavorite ? "已收藏" : "已取消收藏",
           duration: 2000
         });
       }
@@ -144,52 +171,6 @@ struct StudyDetailPage {
     }
   }
 
-
-
-
-  /*async shareResource() {
-    try {
-      if (!this.resource) {
-        promptAction.showToast({ message: "资源未加载" });
-        return;
-      }
-
-      // 1. 先弹个提示，证明按钮点击了
-      promptAction.showToast({ message: "分享按钮已点击，正在启动..." });
-
-      const component = this as ComponentWithContext;
-      const ctx = component.context;
-
-      // 2. 检查上下文是否存在
-      if (!ctx) {
-        promptAction.showToast({ message: "未获取到上下文（模拟器环境限制）" });
-        return;
-      }
-
-      if (!ctx.startAbility) {
-        promptAction.showToast({ message: "当前环境不支持系统分享（请用真机测试）" });
-        return;
-      }
-
-      const shareText = `${this.resource.title}\n${this.resource.content.substring(0, 100)}...\n链接：https://partyapp.example.com/study/${this.resource.id}`;
-
-      const want: ShareWant = {
-        action: "ohos.intent.action.SEND",
-        type: "text/plain",
-        parameters: {
-          "ohos.extra.text": shareText
-        }
-      };
-
-      // 3. 调用分享
-      ctx.startAbility(want);
-      promptAction.showToast({ message: "系统分享已调用（真机可见面板）" });
-
-    } catch (error) {
-      console.error("分享错误:", error);
-      promptAction.showToast({ message: "分享出错: " + JSON.stringify(error) });
-    }
-  }*/
   async shareResource() {
     try {
       if (!this.resource) return;
@@ -217,178 +198,196 @@ struct StudyDetailPage {
       this.isShowShareDialog = true;
     }
   }
+
   build() {
     Column() {
-      if (this.isLoading) {
-        Column() {
-          LoadingProgress()
-            .width(50)
-            .height(50)
-        }
-        .width("100%")
-        .height("100%")
-        .justifyContent(1)
-      } else if (!this.resource) {
-        Column() {
-          Text("加载失败")
-            .fontSize(16)
-            .fontColor("#666666")
-        }
-        .width("100%")
-        .height("100%")
-        .justifyContent(1)
-      } else {
-        Row() {
-          Image($rawfile('返回.png'))
-            .width(24)
-            .height(24)
-            .margin({top:15, left: 16, right: 16 })
-            .onClick(() => {
-              this.updateProgress();
-              router.back();
-            })
-          Text("学习详情")
-            .fontSize(18)
-            .fontWeight(700)
-            .margin({top:17})
-          Row() {
-            Image($rawfile("分享.png"))
-              .width(24)
-              .height(24)
-              .margin({ top:15,left:170,right: 16 })
-              .onClick(() => {
-                this.shareResource();
-              })
-            Image($rawfile("收藏.png"))
-              .width(24)
-              .height(24)
-              .margin({ top:15,right: 16 })
-              .onClick(() => {
-                this.toggleFavorite();
-              })
-          }
-        }
-        .width("100%")
-        .height(56)
-        .alignItems(1)
-        .backgroundColor("#FFFFFF")
-        .borderWidth({ bottom: 1 })
-        .borderColor({ bottom: "#EEEEEE" })
-
-        Scroll() {
+      // 【关键修改 1】新增一个内容容器，包裹所有状态布局，并设置 layoutWeight(1)
+      Column() {
+        if (this.isLoading) {
           Column() {
-            // 图片在最上方
-            if (this.resource.imageUrl) {
-              Image(this.resource.imageUrl)
-                .width("100%")
-                .height(200)
-                .objectFit(3)
-                .margin({ bottom: 20 })
-            }
-
-            // 标题
-            Text(this.resource.title)
-              .fontSize(22)
-              .fontWeight(700)
-              .fontColor("#333333")
-              .margin({ left: 16, right: 16, bottom: 12 })
-              .textOverflow({ overflow: TextOverflow.Clip })
-              .maxLines(3)
-
-            // 学习信息
+            LoadingProgress()
+              .width(50)
+              .height(50)
+          }
+          .width("100%")
+          .height("100%")
+          .justifyContent(FlexAlign.Center) // 【优化】使用 FlexAlign 代替 magic number
+        } else if (!this.resource) {
+          Column() {
+            Text("加载失败")
+              .fontSize(16)
+              .fontColor("#666666")
+          }
+          .width("100%")
+          .height("100%")
+          .justifyContent(FlexAlign.Center)
+        } else {
+          // 【关键修改 2】详情内容也包裹在一个 Column 中
+          Column() {
+            // 顶部导航栏
             Row() {
-              Text(`预计时长: ${this.resource.duration}分钟`)
-                .fontSize(14)
-                .fontColor("#999999")
-              Text(`已学习: ${Math.floor(this.studyDuration / 60)}分钟`)
-                .fontSize(14)
-                .fontColor("#D32F2F")
-                .margin({ left: 24 })
+              Image($rawfile('返回.png'))
+                .width(24)
+                .height(24)
+                .margin({ top: 15, left: 16, right: 16 })
+                .onClick(() => {
+                  router.back();
+                })
+              Text("学习详情")
+                .fontSize(18)
+                .fontWeight(700)
+                .margin({ top: 17 })
+              Row() {
+                Image(this.isFavorite ? $rawfile('已收藏.png') : $rawfile('未收藏.png'))
+                  .width(24)
+                  .height(24)
+                  .margin({ top: 15, left: 170, right: 16 })
+                  .onClick(() => {
+                    this.toggleFavorite();
+                  })
+                Image($rawfile("分享.png"))
+                  .width(26)
+                  .height(26)
+                  .margin({ top: 18, right: 16 })
+                  .onClick(() => {
+                    this.shareResource();
+                  })
+              }
             }
             .width("100%")
-            .margin({ left: 16, right: 16, bottom: 24 })
+            .height(56)
+            .alignItems(1)
+            .backgroundColor("#FFFFFF")
+            .borderWidth({ bottom: 1 })
+            .borderColor({ bottom: "#EEEEEE" })
 
-            // 内容标题
-            Text("学习内容")
-              .fontSize(18)
-              .fontWeight(700)
-              .fontColor("#333333")
-              .margin({ left: 16, right: 16, bottom: 16 })
-
-            // 内容（文章）
-            Text(this.resource.content)
-              .fontSize(16)
-              .lineHeight(24)
-              .fontColor("#333333")
-              .margin({ left: 16, right: 16, bottom: 32 })
-              .textOverflow({ overflow: TextOverflow.Clip })
-
-            // 视频在最后
-            if (this.resource.videoUrl) {
+            // 内容区域
+            Scroll() {
               Column() {
-                Text("视频学习")
+                // 图片在最上方
+                if (this.resource.imageUrl) {
+                  Image(this.resource.imageUrl)
+                    .width("100%")
+                    .height(200)
+                    .objectFit(3)
+                    .margin({ bottom: 20 })
+                }
+
+                // 标题
+                Text(this.resource.title)
+                  .fontSize(22)
+                  .fontWeight(700)
+                  .fontColor("#333333")
+                  .margin({ left: 16, right: 16, bottom: 12 })
+                  .textOverflow({ overflow: TextOverflow.Clip })
+                  .width('100%')
+                  .textAlign(TextAlign.Center)
+                  .maxLines(3)
+
+                // 学习信息
+                Row() {
+                  Text(`预计时长: ${this.resource.duration}分钟`)
+                    .fontSize(14)
+                    .fontColor("#999999")
+                  Text(`已学习: ${Math.floor(this.studyDuration / 60)}分钟`)
+                    .fontSize(14)
+                    .fontColor("#D32F2F")
+                    .margin({ left: 24 })
+                }
+                .width("100%")
+                .margin({ left: 16, right: 16, bottom: 24 })
+
+                // 内容标题
+                Text("学习内容")
                   .fontSize(18)
                   .fontWeight(700)
                   .fontColor("#333333")
                   .margin({ left: 16, right: 16, bottom: 16 })
-                Video({
-                  src: this.resource.videoUrl,
-                  currentProgressRate: 1.0,
-                  previewUri: this.resource.imageUrl
-                })
-                  .width("100%")
-                  .height(200)
-                  .objectFit(3)
-                  .margin({ left: 16, right: 16, bottom: 40 })
-                  .controls(true)
-                  .autoPlay(false)
-                  .muted(false)
+
+                // 内容（文章）
+                Text(this.resource.content)
+                  .fontSize(16)
+                  .lineHeight(24)
+                  .fontColor("#333333")
+                  .margin({ left: 16, right: 16, bottom: 32 })
+                  .textOverflow({ overflow: TextOverflow.Clip })
+
+                // 视频在最后
+                if (this.resource.videoUrl) {
+                  Column() {
+                    Text("视频学习")
+                      .fontSize(18)
+                      .fontWeight(700)
+                      .fontColor("#333333")
+                      .margin({ left: 16, right: 16, bottom: 16 })
+                    Video({
+                      src: this.resource.videoUrl,
+                      currentProgressRate: 1.0,
+                      previewUri: this.resource.imageUrl
+                    })
+                      .width("100%")
+                      .height(200)
+                      .objectFit(3)
+                      .margin({ left: 16, right: 16, bottom: 40 })
+                      .controls(true)
+                      .autoPlay(false)
+                      .muted(false)
+                  }
+                }
+
+                // 添加底部空间，确保内容不被进度条遮挡
+                Blank()
+                  .height(80)
               }
             }
-          }
-        }
-        .flexGrow(1)
-        .backgroundColor("#F5F5F5")
-
-        // 底部进度条
-        Column() {
-          Row() {
-            Text("学习进度 ")
-              .fontSize(14)
-              .fontColor("#333333")
-              .fontWeight(500)
-            Text(`${this.currentProgress}%`) 
-              .fontSize(14)
-              .fontColor("#D32F2F")
-              .fontWeight(500)
-              .margin({ left: "auto" })
+            .width("100%")
+            .layoutWeight(1) // 【关键修改 3】Scroll 填充内部 Column 的剩余空间
+            .backgroundColor("#F5F5F5")
           }
           .width("100%")
-          .margin({ bottom: 0 })
-          .padding({ left: 16, right: 16 })
+          .height("100%")
+        }
+      }
+      .width("100%")
+      .layoutWeight(1) // 【关键修改 4】内容容器占据除底部外的所有空间
 
-          Slider({
-            value: this.currentProgress,
-            min: 0,
-            max: 100,
-            step: 1
-          })
+      // 底部进度条（始终显示）
+      Column() {
+        Row() {
+          Text("学习进度 ")
+            .fontSize(14)
+            .fontColor("#333333")
+            .fontWeight(500)
+          Text(`${this.currentProgress}%`)
+            .fontSize(14)
+            .fontColor("#D32F2F")
+            .fontWeight(500)
+            .margin({ left: "auto" })
+        }
+        .width("100%")
+        .margin({ bottom: 0 })
+        .padding({ left: 16, right: 16 })
+
+        Slider({
+          value: this.currentProgress,
+          min: 0,
+          max: 100,
+          step: 1
+        })
           .width("100%")
           .height(30)
           .blockColor("#D32F2F")
           .trackColor("#F5F5F5")
           .selectedColor("#D32F2F")
           .enabled(false) // 禁用拖动功能
-        }
-        .width("100%")
-        .backgroundColor("#FFFFFF")
-        .borderWidth({ top: 1 })
-        .borderColor({ top: "#EEEEEE" })
-        .padding({ top: 10, bottom: 10 })
-        .height(40)
-
-
       }
+      .width("100%")
+      .backgroundColor("#FFFFFF")
+      .borderWidth({ top: 1 })
+      .borderColor({ top: "#EEEEEE" })
+      .padding({ top: 10, bottom: 10 })
+      .height(60)
+
       // 👇 模拟分享面板（模拟器专用）
       if (this.isShowShareDialog) {
         Column() {
@@ -471,7 +470,7 @@ struct StudyDetailPage {
         .zIndex(999)
       }
     }
+    .width("100%")
     .height("100%")
-
   }
 }

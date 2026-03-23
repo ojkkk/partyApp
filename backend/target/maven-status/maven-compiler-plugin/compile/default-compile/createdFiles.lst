@@ -26,6 +26,7 @@ com\example\partyapp\service\AuthService.class
 com\example\partyapp\mapper\BranchApplicationMessageMapper.class
 com\example\partyapp\entity\Message.class
 com\example\partyapp\controller\AuthController.class
+com\example\partyapp\controller\DuesController$PayMultipleDuesRequest.class
 com\example\partyapp\entity\PolicyComment.class
 com\example\partyapp\entity\DuesPayment.class
 com\example\partyapp\config\StaticResourceConfig.class
