@@ -1,0 +1,2 @@
+-- 修改users表的avatar字段类型，从BLOB改为VARCHAR(500)
+ALTER TABLE users MODIFY COLUMN avatar VARCHAR(500) DEFAULT NULL;
