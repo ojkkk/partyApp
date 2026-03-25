@@ -2,13 +2,20 @@ import router from '@ohos.router';
 import { StorageService } from '../services/StorageService';
 import { UserService, ApiResponse, User } from '../models/UserModel';
 import promptAction from '@ohos.promptAction';
-import photoPicker from '@ohos.file.picker';
-import { BusinessError } from '@ohos.base';
-import fs from '@ohos.file.fs';
-import common from '@ohos.app.ability.common';
 import { emitter } from '@kit.BasicServicesKit';
 
-// 1. 定义自定义弹窗组件：用于输入URL
+// 设计系统常量
+const PRIMARY_COLOR: string = '#D32F2F'; // 柔和蓝作为主色
+const BG_GRAY: string = '#F8FAFC';
+const CARD_BG: string = '#FFFFFF';
+const TEXT_PRIMARY: string = '#1E293B';
+const TEXT_SECONDARY: string = '#64748B';
+const TEXT_HINT: string = '#94A3B8';
+const BORDER_COLOR: string = '#E2E8F0';
+const SHADOW_LOW: string = 'rgba(0, 0, 0, 0.05)';
+const SHADOW_MEDIUM: string = 'rgba(0, 0, 0, 0.1)';
+
+// 美化后的URL输入弹窗
 @CustomDialog
 struct AvatarUrlInputDialog {
   @State inputUrl: string = '';
@@ -16,48 +23,52 @@ struct AvatarUrlInputDialog {
     builder: () => {},
     autoCancel: true,
     alignment: DialogAlignment.Center,
-    offset: { dx: 0, dy: 0 },
-    customStyle: false,
+    customStyle: true,
     isModal: true,
   });
 
-  // 回调函数：将输入的URL传回给页面
   onConfirm: (url: string) => void = (url: string) => {};
 
-  build() {
+  build(): void {
     Column() {
       Text('设置头像地址')
-        .fontSize(18)
+        .fontSize(20)
         .fontWeight(FontWeight.Bold)
-        .margin({ bottom: 16, top: 10 });
+        .fontColor(TEXT_PRIMARY)
+        .margin({ bottom: 20 });
 
       TextInput({ placeholder: '请输入图片网络地址 (URL)', text: this.inputUrl })
         .width('100%')
-        .height(48)
-        .borderRadius(8)
-        .backgroundColor('#F5F5F5')
-        .onChange((value: string) => {
+        .height(52)
+        .borderRadius(12)
+        .backgroundColor(BG_GRAY)
+        .padding({ left: 16, right: 16 })
+        .onChange((value: string): void => {
           this.inputUrl = value;
         })
-        .margin({ bottom: 20 });
+        .margin({ bottom: 24 });
 
       Row() {
         Button('取消')
-          .flexGrow(1)
-          .height(44)
-          .backgroundColor('#EEEEEE')
-          .fontColor('#333333')
-          .onClick(() => {
+          .layoutWeight(1)
+          .height(52)
+          .backgroundColor('transparent')
+          .fontColor(TEXT_SECONDARY)
+          .borderRadius(12)
+          .borderWidth(1)
+          .borderColor(BORDER_COLOR)
+          .onClick((): void => {
             this.controller.close();
           });
 
         Button('确定')
-          .flexGrow(1)
-          .height(44)
+          .layoutWeight(1)
+          .height(52)
           .margin({ left: 12 })
-          .backgroundColor('#D32F2F')
+          .backgroundColor(PRIMARY_COLOR)
           .fontColor('#FFFFFF')
-          .onClick(() => {
+          .borderRadius(12)
+          .onClick((): void => {
             if (this.inputUrl.trim()) {
               this.onConfirm(this.inputUrl.trim());
               this.controller.close();
@@ -68,14 +79,12 @@ struct AvatarUrlInputDialog {
       }
       .width('100%');
     }
-    .padding(20)
+    .padding(28)
     .width('90%')
-    .borderRadius(12);
+    .backgroundColor(CARD_BG)
+    .borderRadius(20)
+    .shadow({ radius: 12, color: SHADOW_LOW, offsetY: 8 });
   }
-}
-
-interface PhotoResult {
-  uri: string;
 }
 
 @Entry
@@ -89,7 +98,6 @@ export struct PersonalInfoEditPage {
   @State avatar: string = '';
   @State isUploadingAvatar: boolean = false;
 
-  // 定义弹窗控制器
   private urlDialogController: CustomDialogController | null = null;
 
   async aboutToAppear(): Promise<void> {
@@ -99,8 +107,8 @@ export struct PersonalInfoEditPage {
   async loadUserInfo(): Promise<void> {
     this.isLoading = true;
     try {
-      const userService = new UserService();
-      const response = await userService.getProfile();
+      const userService: UserService = new UserService();
+      const response: ApiResponse<User> = await userService.getProfile();
       if (response.code === 200 && response.data) {
         this.user = response.data;
         this.name = response.data.name ?? '';
@@ -115,33 +123,26 @@ export struct PersonalInfoEditPage {
     }
   }
 
-  /**
-   * 打开输入框让用户输入URL
-   */
   async inputAvatarUrl(): Promise<void> {
     if (this.isUploadingAvatar) return;
 
-    // 2. 初始化并打开弹窗
     if (!this.urlDialogController) {
       this.urlDialogController = new CustomDialogController({
         builder: AvatarUrlInputDialog({
-          onConfirm: (url: string) => {
+          onConfirm: (url: string): void => {
             this.handleUrlInput(url);
           }
         }),
         autoCancel: true,
         alignment: DialogAlignment.Center,
+        customStyle: true,
         isModal: true,
       });
     }
     this.urlDialogController.open();
   }
 
-  /**
-   * 处理用户输入的URL
-   */
   handleUrlInput(url: string): void {
-    // 简单的URL格式校验
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       promptAction.showToast({ message: '链接需以 http:// 或 https:// 开头' });
       return;
@@ -152,29 +153,21 @@ export struct PersonalInfoEditPage {
     this.uploadAvatar(url);
   }
 
-  /**
-   * 上传头像到服务器
-   */
   async uploadAvatar(avatarUrl: string): Promise<void> {
     this.isUploadingAvatar = true;
-
     try {
       console.log('Avatar URL:', avatarUrl);
-      const userService = new UserService();
-      const response = await userService.uploadAvatar(avatarUrl);
+      const userService: UserService = new UserService();
+      const response: ApiResponse<boolean> = await userService.uploadAvatar(avatarUrl);
 
       if (response.code === 200) {
         promptAction.showToast({ message: '头像设置成功' });
       } else {
-        promptAction.showToast({ message: response.message || '设置失败，请重试' });
-        // 如果服务器失败，可选：回滚头像显示
-        // this.avatar = this.user?.avatar ?? '';
+        promptAction.showToast({ message: '设置失败，请重试' });
       }
     } catch (uploadErr) {
       console.error('Upload Error Details:', JSON.stringify(uploadErr));
       promptAction.showToast({ message: '设置失败，请检查网络' });
-      // 回滚
-      // this.avatar = this.user?.avatar ?? '';
     } finally {
       this.isUploadingAvatar = false;
     }
@@ -206,14 +199,13 @@ export struct PersonalInfoEditPage {
 
     this.isLoading = true;
     try {
-      const userService = new UserService();
+      const userService: UserService = new UserService();
       await userService.updateProfile({
         name: this.name,
         phone: this.phone,
         email: this.email
       });
       promptAction.showToast({ message: '保存成功', duration: 2000 });
-      // 发送事件通知ProfilePage刷新
       emitter.emit("refreshProfile", null);
       router.back();
     } catch {
@@ -223,88 +215,210 @@ export struct PersonalInfoEditPage {
     }
   }
 
-  build() {
+  build(): void {
     Column() {
+      // 顶部导航栏
       Row() {
-        Button('返回')
+        Button(){
+          Image($rawfile('返回.png'))
+            .width(24)
+            .height(24)
+        }
           .backgroundColor('transparent')
-          .fontColor('#D32F2F')
-          .onClick(() => router.back());
+          .fontColor(TEXT_PRIMARY)
+          .fontSize(18)
+          .onClick((): void => {
+            router.back();
+          });
 
         Text('编辑个人信息')
           .fontSize(18)
-          .fontWeight(700)
-          .flexGrow(1)
-          .textAlign(TextAlign.Center);
+          .fontWeight(FontWeight.Medium)
+          .fontColor(TEXT_PRIMARY)
+          .layoutWeight(1)
+          .margin({left:96})
       }
       .width('100%')
       .height(56)
-      .backgroundColor('#fff');
+      .padding({ left: 16, right: 16 })
+      .backgroundColor(CARD_BG)
+      .shadow({ radius: 4, color: SHADOW_LOW, offsetY: 2 })
 
+      // 主内容区域
       Scroll() {
-        Column({ space: 16 }) {
-          Stack() {
-            if (this.avatar) {
-              Image(this.avatar)
-                .width(90)
-                .height(90)
-                .borderRadius(45)
-                .objectFit(ImageFit.Cover)
-                // 加载网络图片时添加占位符/错误处理
-                .onError(() => {
-                  console.error('Image load failed');
-                  promptAction.showToast({ message: '图片加载失败' });
-                });
-            } else {
-              Text('头像')
-                .width(90)
-                .height(90)
-                .backgroundColor('#eee')
-                .borderRadius(45)
-                .textAlign(TextAlign.Center);
+        Column({ space: 0 }) {
+          // 头像区域
+          Column() {
+            Stack() {
+              // 头像容器
+              Column() {
+                if (this.avatar) {
+                  Image(this.avatar)
+                    .width(104)
+                    .height(104)
+                    .borderRadius(52)
+                    .objectFit(ImageFit.Cover)
+                    .onError((): void => {
+                      console.error('Image load failed');
+                    });
+                } else {
+                  Column() {
+                    Text(this.user?.name ? this.user.name.charAt(0) : 'U')
+                      .fontSize(36)
+                      .fontWeight(FontWeight.Bold)
+                      .fontColor('#FFFFFF')
+                  }
+                  .width(104)
+                  .height(104)
+                  .borderRadius(52)
+                  .backgroundColor(PRIMARY_COLOR)
+                }
+              }
+              .width(104)
+              .height(104)
+              .borderRadius(52)
+              .backgroundColor('#F0F4FF')
+              .shadow({ radius: 4, color: SHADOW_LOW, offsetY: 2 })
+
+              // 更换按钮
+              Column() {
+                Text('更换')
+                  .fontSize(12)
+                  .fontColor('#FFFFFF')
+                  .fontWeight(FontWeight.Bold)
+              }
+              .width(104)
+              .height(104)
+              .borderRadius(52)
+              .backgroundColor('rgba(0, 0, 0, 0.4)')
+              .alignItems(HorizontalAlign.Center)
+              .justifyContent(FlexAlign.Center)
             }
+            .width(104)
+            .height(104)
+            .margin({ top: 28, bottom: 16 })
+            .onClick((): void => {
+              this.inputAvatarUrl();
+            })
+
+            Text('点击更换头像')
+              .fontSize(13)
+              .fontColor(TEXT_HINT)
+              .margin({ bottom: 24 })
           }
-          .onClick(() => this.inputAvatarUrl())
-          .margin({ top: 20 });
+          .width('100%')
+          .alignItems(HorizontalAlign.Center)
 
-          TextInput({ placeholder: '姓名', text: this.name })
+          // 信息填写卡片
+          Column() {
+            // 姓名
+            Row() {
+              Text('姓名')
+                .fontSize(14)
+                .fontColor(TEXT_SECONDARY)
+                .width(72)
+              TextInput({ placeholder: '请输入姓名', text: this.name })
+                .layoutWeight(1)
+                .height(52)
+                .fontSize(15)
+                .fontColor(TEXT_PRIMARY)
+                .placeholderColor(TEXT_HINT)
+                .backgroundColor(CARD_BG)
+                .borderRadius(12)
+                .borderWidth(1)
+                .borderColor(BORDER_COLOR)
+                .onChange((value: string): void => {
+                  this.name = value;
+                })
+            }
             .width('100%')
-            .height(50)
-            .backgroundColor('#fff')
-            .borderRadius(8)
-            .padding({ left: 16 })
-            .onChange((value) => this.name = value);
+            .padding({ top: 16, bottom: 16 })
 
-          TextInput({ placeholder: '手机号', text: this.phone })
-            .width('100%')
-            .height(50)
-            .backgroundColor('#fff')
-            .borderRadius(8)
-            .padding({ left: 16 })
-            .onChange((value) => this.phone = value);
+            // 分割线
+            Divider().color(BORDER_COLOR).strokeWidth(1)
 
-          TextInput({ placeholder: '邮箱', text: this.email })
+            // 手机号
+            Row() {
+              Text('手机号')
+                .fontSize(14)
+                .fontColor(TEXT_SECONDARY)
+                .width(72)
+              TextInput({ placeholder: '请输入手机号', text: this.phone })
+                .layoutWeight(1)
+                .height(52)
+                .fontSize(15)
+                .fontColor(TEXT_PRIMARY)
+                .placeholderColor(TEXT_HINT)
+                .backgroundColor(CARD_BG)
+                .borderRadius(12)
+                .borderWidth(1)
+                .borderColor(BORDER_COLOR)
+                .type(InputType.PhoneNumber)
+                .onChange((value: string): void => {
+                  this.phone = value;
+                })
+            }
             .width('100%')
-            .height(50)
-            .backgroundColor('#fff')
-            .borderRadius(8)
-            .padding({ left: 16 })
-            .onChange((value) => this.email = value);
+            .padding({ top: 16, bottom: 16 })
 
-          Button('保存')
+            // 分割线
+            Divider().color(BORDER_COLOR).strokeWidth(1)
+
+            // 邮箱
+            Row() {
+              Text('邮箱')
+                .fontSize(14)
+                .fontColor(TEXT_SECONDARY)
+                .width(72)
+              TextInput({ placeholder: '请输入邮箱', text: this.email })
+                .layoutWeight(1)
+                .height(52)
+                .fontSize(15)
+                .fontColor(TEXT_PRIMARY)
+                .placeholderColor(TEXT_HINT)
+                .backgroundColor(CARD_BG)
+                .borderRadius(12)
+                .borderWidth(1)
+                .borderColor(BORDER_COLOR)
+                .type(InputType.Email)
+                .onChange((value: string): void => {
+                  this.email = value;
+                })
+            }
             .width('100%')
-            .height(50)
-            .backgroundColor('#D32F2F')
-            .fontColor('#fff')
-            .borderRadius(8)
-            .onClick(() => this.saveChanges());
+            .padding({ top: 16, bottom: 16 })
+          }
+          .width('100%')
+          .padding({ left: 24, right: 24 })
+          .backgroundColor(CARD_BG)
+          .borderRadius(16)
+          .shadow({ radius: 12, color: SHADOW_LOW, offsetY: 4 })
+          .margin({ top: 16 })
+
+          // 保存按钮
+          Button(this.isLoading ? '保存中...' : '保存')
+            .width('100%')
+            .height(56)
+            .fontSize(16)
+            .fontColor('#FFFFFF')
+            .backgroundColor(PRIMARY_COLOR)
+            .borderRadius(16)
+            .shadow({ radius: 8, color: SHADOW_MEDIUM, offsetY: 4 })
+            .margin({ top: 24, bottom: 32 })
+            .enabled(!this.isLoading && !this.isUploadingAvatar)
+            .opacity((this.isLoading || this.isUploadingAvatar) ? 0.8 : 1)
+            .onClick((): void => {
+              this.saveChanges();
+            })
         }
-        .padding(20);
+        .padding({ bottom: 32 })
       }
-      .flexGrow(1);
+      .layoutWeight(1)
+      .scrollBar(BarState.Off)
+      .edgeEffect(EdgeEffect.Spring)
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F5F5F5');
+    .backgroundColor(BG_GRAY)
   }
 }

@@ -179,6 +179,11 @@ export interface MarkBranchMessageAsReadRequest {
   messageId: string;
 }
 
+// 党费金额请求接口
+export interface DuesAmountRequest {
+  amount: number;
+}
+
 export class UserService {
   async login(username: string, password: string): Promise<ApiResponse<LoginResponse>> {
     const request: LoginRequest = {
@@ -225,6 +230,11 @@ export class UserService {
 
   async updateProfile(user: Partial<User>): Promise<ApiResponse<User>> {
     return await NetworkService.put<ApiResponse<User>>('/api/user/profile', user);
+  }
+
+  // 管理员更新其他用户信息
+  async updateUser(userId: string, user: Partial<User>): Promise<ApiResponse<User>> {
+    return await NetworkService.put<ApiResponse<User>>(`/api/user/update/${userId}`, user);
   }
 
   async changePassword(oldPassword: string, newPassword: string): Promise<ApiResponse<boolean>> {
@@ -329,5 +339,24 @@ export class UserService {
   async markBranchMessageAsRead(messageId: string): Promise<ApiResponse<boolean>> {
     const request: MarkBranchMessageAsReadRequest = { messageId };
     return await NetworkService.post<ApiResponse<boolean>>('/api/branch/message/read', request);
+  }
+
+  // 踢出支部成员
+  async kickMember(userId: string): Promise<ApiResponse<boolean>> {
+    console.log('踢出支部成员:', userId);
+    const response = await NetworkService.post<ApiResponse<boolean>>(`/api/user/kick/${userId}`);
+    console.log('踢出支部成员响应:', response);
+    return response;
+  }
+
+  // 重置成员密码
+  async resetPassword(userId: string): Promise<ApiResponse<boolean>> {
+    return await NetworkService.post<ApiResponse<boolean>>(`/api/user/reset-password/${userId}`);
+  }
+
+  // 更新党费金额
+  async updateDuesAmount(userId: string, amount: number): Promise<ApiResponse<boolean>> {
+    const requestBody: DuesAmountRequest = { amount: amount };
+    return await NetworkService.put<ApiResponse<boolean>>(`/api/user/dues-amount/${userId}`, requestBody);
   }
 }

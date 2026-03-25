@@ -1,4 +1,4 @@
-﻿import { Activity, ActivityService, ActivityParticipant } from "../models/ActivityModel";
+import { Activity, ActivityService, ActivityParticipant } from "../models/ActivityModel";
 import { ApiResponse, UserInfo } from "../models/UserModel";
 import { StorageService } from '../services/StorageService';
 import router from "@ohos.router";
@@ -290,7 +290,7 @@ export struct ActivityDetailPage {
 
               Column() {
                 Row() {
-                  Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=clock%20icon%20red&image_size=square')
+                  Image($rawfile('时间.png'))
                     .width(18)
                     .height(18)
                     .margin({ right: 8 })
@@ -307,7 +307,7 @@ export struct ActivityDetailPage {
                 .margin({ bottom: 12 })
 
                 Row() {
-                  Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=location%20icon%20red&image_size=square')
+                  Image($rawfile('地点.png'))
                     .width(18)
                     .height(18)
                     .margin({ right: 8 })
@@ -324,7 +324,7 @@ export struct ActivityDetailPage {
                 .margin({ bottom: 12 })
 
                 Row() {
-                  Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20icon%20red&image_size=square')
+                  Image($rawfile('组织者.png'))
                     .width(18)
                     .height(18)
                     .margin({ right: 8 })
@@ -341,7 +341,7 @@ export struct ActivityDetailPage {
                 .margin({ bottom: 12 })
 
                 Row() {
-                  Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=people%20icon%20red&image_size=square')
+                  Image($rawfile('人员报名.png'))
                     .width(18)
                     .height(18)
                     .margin({ right: 8 })
@@ -354,12 +354,14 @@ export struct ActivityDetailPage {
                     .fontColor('#D32F2F')
                     .fontWeight(FontWeight.Medium)
                   if (this.canManage() && this.isActivityCreator() && this.activity) {
-                    Button('查看')
+                    Button(){Image($rawfile('查看(报名).png'))
+                      .height(24)
+                      .width(24)}
                       .fontSize(12)
                       .height(24)
                       .padding({ left: 8, right: 8 })
                       .backgroundColor('#FFFFFF')
-                      .borderWidth(1)
+                      .borderWidth(0)
                       .borderColor('#D32F2F')
                       .fontColor('#D32F2F')
                       .borderRadius(12)
@@ -382,7 +384,7 @@ export struct ActivityDetailPage {
                 // 签到人数
                 if (this.activity && (this.activity.status === 'ongoing' || this.activity.status === 'completed') && this.canManage() && this.isActivityCreator()) {
                   Row() {
-                    Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=check%20icon%20green&image_size=square')
+                    Image($rawfile('签到.png'))
                       .width(18)
                       .height(18)
                       .margin({ right: 8 })
@@ -394,12 +396,15 @@ export struct ActivityDetailPage {
                       .fontSize(14)
                       .fontColor('#4CAF50')
                       .fontWeight(FontWeight.Medium)
-                    Button('查看')
+                    Button(){Image($rawfile('查看(签到).png'))
+                        .height(24)
+                        .width(24)}
                       .fontSize(12)
                       .height(24)
+
                       .padding({ left: 8, right: 8 })
                       .backgroundColor('#FFFFFF')
-                      .borderWidth(1)
+                      .borderWidth(0)
                       .borderColor('#4CAF50')
                       .fontColor('#4CAF50')
                       .borderRadius(12)
@@ -486,6 +491,9 @@ export struct ActivityDetailPage {
                   })
                   .width("100%")
                   .height(120)
+                  .onChange((value: string) => {
+                    this.summary = value;
+                  })
                   .margin({ bottom: 12 })
                   Button("上传总结")
                     .width("100%")

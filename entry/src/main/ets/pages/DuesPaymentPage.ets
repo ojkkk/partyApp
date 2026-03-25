@@ -1,6 +1,7 @@
 import router from '@ohos.router';
 import { UserService, ApiResponse, DuesStats, DuesPayment } from '../models/UserModel';
 import promptAction from '@ohos.promptAction';
+import { emitter } from '@kit.BasicServicesKit';
 
 @Entry
 @Component
@@ -48,6 +49,8 @@ export struct DuesPaymentPage {
           duration: 2000
         });
         await this.loadDuesStats();
+        // 发送事件通知ProfilePage刷新
+        emitter.emit("refreshProfile", null);
       } else {
         promptAction.showToast({
           message: '党费缴纳失败',
@@ -87,6 +90,8 @@ export struct DuesPaymentPage {
           duration: 2000
         });
         await this.loadDuesStats();
+        // 发送事件通知ProfilePage刷新
+        emitter.emit("refreshProfile", null);
       } else {
         promptAction.showToast({
           message: '党费缴纳失败',
@@ -125,6 +130,8 @@ export struct DuesPaymentPage {
           .width(24)
           .height(24)
           .onClick(() => {
+            // 发送事件通知ProfilePage刷新
+            emitter.emit("refreshProfile", null);
             router.back();
           })
 
@@ -341,6 +348,7 @@ export struct DuesPaymentPage {
       .layoutWeight(1)
       .backgroundColor('#F7F8FA')
       .scrollBar(BarState.Off)
+      .align(Alignment.TopStart)
 
       // 7. 底部批量缴纳按钮 (悬浮式)
       if (this.selectedPaymentIds.length > 0) {

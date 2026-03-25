@@ -190,7 +190,7 @@ struct PolicyDetailPage {
               .fontSize(14)
               .height(32)
               .padding({ left: 12, right: 12 })
-              .backgroundColor('#007AFF')
+              .backgroundColor('#D32F2F')
               .margin({ right: 8 })
               .onClick(() => {
                 router.pushUrl({

@@ -94,6 +94,25 @@ public class UserController {
         }
     }
 
+    // 管理员更新其他用户信息
+    @PutMapping("/update/{userId}")
+    public ApiResponse<User> updateUser(@PathVariable String userId, @RequestBody User userUpdate) {
+        try {
+            String currentUserId = UserContext.getUserId();
+            User currentUser = userService.getUserById(currentUserId);
+            
+            // 检查权限（只有管理员或支部管理员可以更新其他用户信息）
+            if (!"admin".equals(currentUser.getRole()) && !"branch_admin".equals(currentUser.getRole())) {
+                return ApiResponse.error("无权操作");
+            }
+            
+            User user = userService.updateUser(userId, userUpdate);
+            return ApiResponse.success(user);
+        } catch (Exception e) {
+            return ApiResponse.error("更新失败");
+        }
+    }
+
     // 修改密码
     @PostMapping("/change-password")
     public ApiResponse<Boolean> changePassword(@RequestParam("oldPassword") String oldPassword, 
@@ -187,6 +206,55 @@ public class UserController {
 
         public void setAvatar(String avatar) {
             this.avatar = avatar;
+        }
+    }
+
+    // 踢出支部成员
+    @PostMapping("/kick/{userId}")
+    public ApiResponse<Boolean> kickMember(@PathVariable String userId) {
+        try {
+            String currentUserId = UserContext.getUserId();
+            boolean result = userService.kickMember(currentUserId, userId);
+            return ApiResponse.success(result);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
+    // 重置成员密码
+    @PostMapping("/reset-password/{userId}")
+    public ApiResponse<Boolean> resetPassword(@PathVariable String userId) {
+        try {
+            String currentUserId = UserContext.getUserId();
+            boolean result = userService.resetPassword(currentUserId, userId);
+            return ApiResponse.success(result);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
+    // 更新党费金额
+    @PutMapping("/dues-amount/{userId}")
+    public ApiResponse<Boolean> updateDuesAmount(@PathVariable String userId, @RequestBody DuesAmountRequest request) {
+        try {
+            String currentUserId = UserContext.getUserId();
+            boolean result = userService.updateDuesAmount(currentUserId, userId, request.getAmount());
+            return ApiResponse.success(result);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
+    // 党费金额请求DTO
+    private static class DuesAmountRequest {
+        private java.math.BigDecimal amount;
+
+        public java.math.BigDecimal getAmount() {
+            return amount;
+        }
+
+        public void setAmount(java.math.BigDecimal amount) {
+            this.amount = amount;
         }
     }
 }

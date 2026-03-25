@@ -70,3 +70,4 @@ com\example\partyapp\dto\StudyStats.class
 com\example\partyapp\mapper\StudyProgressMapper.class
 com\example\partyapp\config\DataInitializer.class
 com\example\partyapp\controller\PolicyController$CommentRequest.class
+com\example\partyapp\controller\UserController$DuesAmountRequest.class

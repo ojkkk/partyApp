@@ -25,6 +25,7 @@
     "pages/UserDetailPage",
     "pages/ChatPage",
     "pages/ChatListPage",
-    "pages/BranchManagementPage"
+    "pages/BranchManagementPage",
+    "pages/PersonnelManagementPage"
   ]
 }

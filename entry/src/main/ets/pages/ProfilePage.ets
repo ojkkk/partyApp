@@ -5,93 +5,65 @@ import promptAction from '@ohos.promptAction';
 import { AvatarComponent } from '../components/AvatarComponent';
 import { emitter } from '@kit.BasicServicesKit';
 
+// 全局设计常量
+const PRIMARY_COLOR: string = '#D32F2F';
+const BG_GRAY: string = '#F5F7FA';
+const CARD_BG: string = '#FFFFFF';
+const TEXT_PRIMARY: string = '#2D3436';
+const TEXT_SECONDARY: string = '#636E72';
+const TEXT_GRAY: string = '#B2BEC3';
+const SUCCESS_COLOR: string = '#00B894';
 
 @Component
 export struct ProfilePage {
   @State user: UserInfo | null = null;
   @State isLoading: boolean = false;
-  @State messageNotifications: boolean = true;
-  @State activityNotifications: boolean = true;
-  @State studyNotifications: boolean = true;
-  @State duesNotifications: boolean = true;
   @State duesStats: DuesStats | null = null;
   @State isLoadingDues: boolean = false;
 
-  async aboutToAppear() {
+  async aboutToAppear(): Promise<void> {
     await this.loadUserInfo();
     await this.loadDuesStats();
-    
-    // 添加事件监听器，监听个人信息更新
-    emitter.on("refreshProfile", async () => {
+    emitter.on("refreshProfile", async (): Promise<void> => {
       console.info("✅ 从个人信息编辑页返回，刷新个人信息");
       await this.loadUserInfo();
       await this.loadDuesStats();
     });
   }
 
-  aboutToDisappear() {
-    // 移除事件监听器
+  aboutToDisappear(): void {
     emitter.off("refreshProfile");
   }
 
-  // 页面显示时重新加载数据
-  async onPageShow() {
+  async onPageShow(): Promise<void> {
     await this.loadUserInfo();
     await this.loadDuesStats();
   }
 
-  async loadDuesStats() {
+  // 业务逻辑方法
+  async loadDuesStats(): Promise<void> {
     this.isLoadingDues = true;
     try {
-      const userService = new UserService();
+      const userService: UserService = new UserService();
       const response: ApiResponse<DuesStats> = await userService.getDuesStats();
       if (response.code === 200 && response.data) {
         this.duesStats = response.data;
       }
     } catch (error) {
       console.error('加载党费统计失败:', error);
-      promptAction.showToast({
-        message: '加载党费统计失败',
-        duration: 2000
-      });
+      promptAction.showToast({ message: '加载党费统计失败', duration: 2000 });
     } finally {
       this.isLoadingDues = false;
     }
   }
 
-  async payDues(month: string, amount: number) {
-    try {
-      const userService = new UserService();
-      const response: ApiResponse<boolean> = await userService.payDues(month, amount, 'online');
-      if (response.code === 200 && response.data) {
-        promptAction.showToast({
-          message: '党费缴纳成功',
-          duration: 2000
-        });
-        await this.loadDuesStats();
-      } else {
-        promptAction.showToast({
-          message: '党费缴纳失败',
-          duration: 2000
-        });
-      }
-    } catch (error) {
-      console.error('缴纳党费失败:', error);
-      promptAction.showToast({
-        message: '缴纳党费失败',
-        duration: 2000
-      });
-    }
-  }
-
-  async loadUserInfo() {
+  async loadUserInfo(): Promise<void> {
     this.isLoading = true;
     try {
       const cachedUser: UserInfo | null = StorageService.getItem<UserInfo>('user');
       if (cachedUser) {
         this.user = cachedUser;
       }
-      
       const response: ApiResponse<UserInfo> = await new UserService().getCurrentUser();
       if (response.code === 200 && response.data) {
         this.user = response.data;
@@ -104,487 +76,342 @@ export struct ProfilePage {
     }
   }
 
-  async logout() {
+  async logout(): Promise<void> {
     await StorageService.removeItem('user');
     await StorageService.removeItem('token');
-    promptAction.showToast({
-      message: '已退出登录',
-      duration: 2000
-    });
-    router.replaceUrl({
-      url: 'pages/LoginPage'
-    });
+    promptAction.showToast({ message: '已退出登录', duration: 2000 });
+    router.replaceUrl({ url: 'pages/LoginPage' });
   }
 
-  async navigateToPersonalInfo() {
+  async navigateToPersonalInfo(): Promise<void> {
     try {
-      const userService = new UserService();
-      const response = await userService.getProfile();
+      const userService: UserService = new UserService();
+      const response: ApiResponse<UserInfo> = await userService.getProfile();
       if (response.code === 200 && response.data) {
-        // 导航到个人信息编辑页面
-        router.pushUrl({
-          url: 'pages/PersonalInfoEditPage'
-        });
+        router.pushUrl({ url: 'pages/PersonalInfoEditPage' });
       }
     } catch (error) {
       console.error('获取个人信息失败:', error);
-      promptAction.showToast({
-        message: '获取个人信息失败',
-        duration: 2000
-      });
+      promptAction.showToast({ message: '获取个人信息失败', duration: 2000 });
     }
   }
 
-  async navigateToPasswordChange() {
+  async navigateToPasswordChange(): Promise<void> {
     try {
-      // 导航到密码修改页面
-      router.pushUrl({
-        url: 'pages/PasswordChangePage'
-      });
+      router.pushUrl({ url: 'pages/PasswordChangePage' });
     } catch (error) {
       console.error('导航失败:', error);
-      promptAction.showToast({
-        message: '导航失败',
-        duration: 2000
-      });
+      promptAction.showToast({ message: '导航失败', duration: 2000 });
     }
   }
 
-  async navigateToLoginLogs() {
+  async navigateToLoginLogs(): Promise<void> {
     try {
-      // 导航到登录日志页面
-      router.pushUrl({
-        url: 'pages/LoginLogsPage'
-      });
+      router.pushUrl({ url: 'pages/LoginLogsPage' });
     } catch (error) {
       console.error('导航失败:', error);
-      promptAction.showToast({
-        message: '导航失败',
-        duration: 2000
-      });
+      promptAction.showToast({ message: '导航失败', duration: 2000 });
     }
   }
 
-  async navigateToDuesPayment() {
+  async navigateToDuesPayment(): Promise<void> {
     try {
       if (this.duesStats) {
-        // 导航到党费缴纳页面
-        router.pushUrl({
-          url: 'pages/DuesPaymentPage'
-        });
+        router.pushUrl({ url: 'pages/DuesPaymentPage' });
       }
     } catch (error) {
       console.error('导航失败:', error);
-      promptAction.showToast({
-        message: '导航失败',
-        duration: 2000
-      });
+      promptAction.showToast({ message: '导航失败', duration: 2000 });
     }
   }
 
-  async clearCache() {
+  async clearCache(): Promise<void> {
     try {
-      const userService = new UserService();
+      const userService: UserService = new UserService();
       const response: ApiResponse<boolean> = await userService.clearCache();
       if (response.code === 200 && response.data) {
+        promptAction.showToast({ message: '缓存已清理', duration: 2000 });
+      }
+    } catch (error) {
+      console.error('清理缓存失败:', error);
+      promptAction.showToast({ message: '清理缓存失败', duration: 2000 });
+    }
+  }
+
+  async checkForUpdates(): Promise<void> {
+    try {
+      const userService: UserService = new UserService();
+      const response: ApiResponse<UpdateInfo> = await userService.checkUpdate();
+      if (response.code === 200 && response.data) {
         promptAction.showToast({
-          message: '缓存已清理',
+          message: response.data.isLatest ? '当前已是最新版本' : '有新版本可用',
           duration: 2000
         });
       }
     } catch (error) {
-      console.error('清理缓存失败:', error);
-      promptAction.showToast({
-        message: '清理缓存失败',
-        duration: 2000
-      });
-    }
-  }
-
-  async checkForUpdates() {
-    try {
-      const userService = new UserService();
-      const response: ApiResponse<UpdateInfo> = await userService.checkUpdate();
-      if (response.code === 200 && response.data) {
-        if (response.data.isLatest) {
-          promptAction.showToast({
-            message: '当前已是最新版本',
-            duration: 2000
-          });
-        } else {
-          promptAction.showToast({
-            message: '有新版本可用',
-            duration: 2000
-          });
-        }
-      }
-    } catch (error) {
       console.error('检查更新失败:', error);
-      promptAction.showToast({
-        message: '检查更新失败',
-        duration: 2000
-      });
+      promptAction.showToast({ message: '检查更新失败', duration: 2000 });
     }
   }
 
-  async navigateToAbout() {
-    try {
-      // 这里可以导航到关于我们页面
-      promptAction.showToast({
-        message: '关于我们功能开发中',
-        duration: 2000
-      });
-    } catch (error) {
-      console.error('获取关于我们信息失败:', error);
-      promptAction.showToast({
-        message: '获取关于我们信息失败',
-        duration: 2000
-      });
+  // 通用列表项
+  @Builder
+  MenuItem(title: string, targetPage: string): void {
+    Row() {
+      Text(title)
+        .fontSize(15)
+        .fontColor(TEXT_PRIMARY)
+      Blank()
+      Text('>')
+        .fontSize(16)
+        .fontColor(TEXT_GRAY)
     }
-  }
-
-  build() {
-    Column() {
-      // 顶部个人信息区域
-      Column() {
-        if (this.user) {
-          AvatarComponent({
-            user: {
-              avatar: this.user.avatar,
-              name: this.user.name
-            },
-            avatarSize: 100
-          })
-            .margin({ bottom: '16px' })
-        } else {
-          Text('党')
-            .width(100)
-            .height(100)
-            .borderRadius(50)
-            .backgroundColor('#D32F2F')
-            .fontColor('#fff')
-            .fontSize(40)
-            .textAlign(TextAlign.Center)
-            .margin({ bottom: '16px' })
-        }
-        Text(this.user?.name || '党员同志')
-          .fontSize(20)
-          .fontWeight(700)
-          .fontColor('#333333')
-          .margin({ bottom: '8px' })
-        Text(this.user?.role === 'admin' ? '系统管理员' : this.user?.role === 'branch_admin' ? '支部管理员' : '普通党员')
-          .fontSize(14)
-          .fontColor('#D32F2F')
+    .width('100%')
+    .padding({ top: 14, bottom: 14 })
+    .onClick((): void => {
+      if (targetPage) {
+        router.pushUrl({ url: targetPage });
       }
-      .width('100%')
-      .padding({ top: '40px', bottom: '32px' })
-      .backgroundColor('#FFFFFF')
-      .borderWidth({ bottom: 1 })
-      .borderColor({ bottom: '#EEEEEE' })
+    })
+  }
 
-      // 核心基础功能区域
+  // 通用列表项（自定义点击）
+  @Builder
+  MenuItemCustom(title: string, callback: () => void): void {
+    Row() {
+      Text(title)
+        .fontSize(15)
+        .fontColor(TEXT_PRIMARY)
+      Blank()
+      Text('>')
+        .fontSize(16)
+        .fontColor(TEXT_GRAY)
+    }
+    .width('100%')
+    .padding({ top: 14, bottom: 14 })
+    .onClick(callback)
+  }
+
+  build(): void {
+    Scroll() {
       Column() {
-        Text('核心功能')
-          .fontSize(14)
-          .fontColor('#666666')
-          .margin({ left: '20px', top: '20px', bottom: '12px' })
-
-        List() {
-          // 个人信息展示与编辑
-          ListItem() {
-            Row() {
-              Text('个人信息')
-                .fontSize(16)
-                .fontColor('#333333')
-              Text('>')
-                .fontSize(16)
-                .fontColor('#999999')
-            }
-            .width('100%')
-            .padding({ left: '20px', right: '20px', top: '16px', bottom: '16px' })
-            .onClick(async () => {
-              await this.navigateToPersonalInfo();
-            })
-          }
-
-          // 党费缴纳相关
-          ListItem() {
-            Column() {
-              Row() {
-                Text('党费缴纳')
-                  .fontSize(16)
-                  .fontColor('#333333')
-                Text('>')
-                  .fontSize(16)
-                  .fontColor('#999999')
-              }
-              .width('100%')
-              .justifyContent(FlexAlign.SpaceBetween)
-              
-              if (this.duesStats) {
-                Column() {
-                  Row() {
-                    Text('待缴金额:')
-                      .fontSize(14)
-                      .fontColor('#666666')
-                    Text(`¥${this.duesStats.pendingAmount || 0}`)
-                      .fontSize(14)
-                      .fontColor('#D32F2F')
-                      .fontWeight(700)
-                  }
-                  .margin({ top: '8px' })
-                  
-                  Row() {
-                    Text('已缴金额:')
-                      .fontSize(14)
-                      .fontColor('#666666')
-                    Text(`¥${this.duesStats.paidAmount || 0}`)
-                      .fontSize(14)
-                      .fontColor('#4CAF50')
-                      .fontWeight(700)
-                  }
-                  .margin({ top: '4px' })
-                }
-                .margin({ top: '8px' })
-              }
-            }
-            .width('100%')
-            .padding({ left: '20px', right: '20px', top: '16px', bottom: '16px' })
-            .onClick(async () => {
-              await this.navigateToDuesPayment();
-            })
-          }
-        }
-        .width('100%')
-        .backgroundColor('#FFFFFF')
-        .margin({ top: '4px' })
-
-        // 账号安全管理
-        Text('账号安全')
-          .fontSize(14)
-          .fontColor('#666666')
-          .margin({ left: '20px', top: '20px', bottom: '12px' })
-
-        List() {
-          ListItem() {
-            Row() {
-              Text('密码修改')
-                .fontSize(16)
-                .fontColor('#333333')
-              Text('>')
-                .fontSize(16)
-                .fontColor('#999999')
-            }
-            .width('100%')
-            .padding({ left: '20px', right: '20px', top: '16px', bottom: '16px' })
-            .onClick(async () => {
-              await this.navigateToPasswordChange();
-            })
-          }
-
-          ListItem() {
-            Row() {
-              Text('登录日志')
-                .fontSize(16)
-                .fontColor('#333333')
-              Text('>')
-                .fontSize(16)
-                .fontColor('#999999')
-            }
-            .width('100%')
-            .padding({ left: '20px', right: '20px', top: '16px', bottom: '16px' })
-            .onClick(async () => {
-              await this.navigateToLoginLogs();
-            })
-          }
-        }
-        .width('100%')
-        .backgroundColor('#FFFFFF')
-        .margin({ top: '4px' })
-
-        // 系统设置
-        Text('系统设置')
-          .fontSize(14)
-          .fontColor('#666666')
-          .margin({ left: '20px', top: '20px', bottom: '12px' })
-
-        List() {
-          ListItem() {
-            Row() {
-              Text('消息提醒')
-                .fontSize(16)
-                .fontColor('#333333')
-              Text('>')
-                .fontSize(16)
-                .fontColor('#999999')
-            }
-            .width('100%')
-            .padding({ left: '20px', right: '20px', top: '16px', bottom: '16px' })
-          }
-
-          ListItem() {
-            Row() {
-              Text('活动通知')
-                .fontSize(16)
-                .fontColor('#333333')
-              Text('>')
-                .fontSize(16)
-                .fontColor('#999999')
-            }
-            .width('100%')
-            .padding({ left: '20px', right: '20px', top: '16px', bottom: '16px' })
-          }
-
-          ListItem() {
-            Row() {
-              Text('学习提醒')
-                .fontSize(16)
-                .fontColor('#333333')
-              Text('>')
-                .fontSize(16)
-                .fontColor('#999999')
-            }
-            .width('100%')
-            .padding({ left: '20px', right: '20px', top: '16px', bottom: '16px' })
-          }
-
-          ListItem() {
-            Row() {
-              Text('党费提醒')
-                .fontSize(16)
-                .fontColor('#333333')
-              Text('>')
-                .fontSize(16)
-                .fontColor('#999999')
-            }
-            .width('100%')
-            .padding({ left: '20px', right: '20px', top: '16px', bottom: '16px' })
-          }
-
-          ListItem() {
-            Row() {
-              Text('缓存清理')
-                .fontSize(16)
-                .fontColor('#333333')
-              Text('>')
-                .fontSize(16)
-                .fontColor('#999999')
-            }
-            .width('100%')
-            .padding({ left: '20px', right: '20px', top: '16px', bottom: '16px' })
-            .onClick(async () => {
-              await this.clearCache();
-            })
-          }
-
-          ListItem() {
-            Row() {
-              Text('版本更新')
-                .fontSize(16)
-                .fontColor('#333333')
-              Text('>')
-                .fontSize(16)
-                .fontColor('#999999')
-            }
-            .width('100%')
-            .padding({ left: '20px', right: '20px', top: '16px', bottom: '16px' })
-            .onClick(async () => {
-              await this.checkForUpdates();
-            })
-          }
-
-          ListItem() {
-            Row() {
-              Text('关于我们')
-                .fontSize(16)
-                .fontColor('#333333')
-              Text('>')
-                .fontSize(16)
-                .fontColor('#999999')
-            }
-            .width('100%')
-            .padding({ left: '20px', right: '20px', top: '16px', bottom: '16px' })
-            .onClick(async () => {
-              await this.navigateToAbout();
-            })
-          }
-        }
-        .width('100%')
-        .backgroundColor('#FFFFFF')
-        .margin({ top: '4px' })
-
-        // 管理权限专属功能（仅管理员可见）
-        if (this.user?.role === 'admin' || this.user?.role === 'branch_admin') {
-          Text('管理功能')
-            .fontSize(14)
-            .fontColor('#666666')
-            .margin({ left: '20px', top: '20px', bottom: '12px' })
-
-          List() {
-            ListItem() {
-              Row() {
-                Text('用户管理')
-                  .fontSize(16)
-                  .fontColor('#333333')
-                Text('>')
-                  .fontSize(16)
-                  .fontColor('#999999')
-              }
-              .width('100%')
-              .padding({ left: '20px', right: '20px', top: '16px', bottom: '16px' })
-              .onClick(() => {
-                promptAction.showToast({
-                  message: '用户管理功能开发中',
-                  duration: 2000
-                });
+        // 1. 顶部渐变头部
+        Column() {
+          Stack() {
+            if (this.user) {
+              AvatarComponent({
+                user: { avatar: this.user.avatar, name: this.user.name },
+                avatarSize: 88
               })
+            } else {
+              Text('党')
+                .width(88)
+                .height(88)
+                .borderRadius(44)
+                .backgroundColor('#FFFFFF')
+                .fontColor(PRIMARY_COLOR)
+                .fontSize(36)
+                .fontWeight(FontWeight.Bold)
+                .textAlign(TextAlign.Center)
             }
+          }
+          .width(96)
+          .height(96)
+          .shadow({ radius: 12, color: 'rgba(211, 47, 47, 0.2)', offsetY: 6 })
+          .margin({ bottom: 16 })
 
-            ListItem() {
-              Row() {
-                Text('数据统计')
-                  .fontSize(16)
-                  .fontColor('#333333')
-                Text('>')
-                  .fontSize(16)
-                  .fontColor('#999999')
-              }
-              .width('100%')
-              .padding({ left: '20px', right: '20px', top: '16px', bottom: '16px' })
-              .onClick(() => {
-                promptAction.showToast({
-                  message: '数据统计功能开发中',
-                  duration: 2000
-                });
-              })
-            }
+          Text(this.user?.name || '党员同志')
+            .fontSize(22)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .margin({ bottom: 6 })
+
+          Row() {
+            Text(this.user?.role === 'admin' ? '系统管理员' : this.user?.role === 'branch_admin' ? '支部管理员' : '普通党员')
+              .fontSize(12)
+              .fontColor(PRIMARY_COLOR)
+              .padding({ left: 12, right: 12, top: 4, bottom: 4 })
+          }
+          .backgroundColor('#FFFFFF')
+          .borderRadius(100)
+        }
+        .width('100%')
+        .padding({ top: 48, bottom: 32 })
+        .linearGradient({ angle: 135, colors: [['#C62828', 0], ['#E53935', 1]] })
+
+        // 2. 党费卡片
+        Column() {
+          Row() {
+            Text('党费概览')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(TEXT_PRIMARY)
+            Blank()
+            Text('立即缴纳 >')
+              .fontSize(12)
+              .fontColor(PRIMARY_COLOR)
+              .onClick((): void => { this.navigateToDuesPayment(); })
           }
           .width('100%')
-          .backgroundColor('#FFFFFF')
-          .margin({ top: '4px' })
+          .margin({ bottom: 20 })
+
+          Row() {
+            Column() {
+              Text('待缴金额')
+                .fontSize(12)
+                .fontColor(TEXT_SECONDARY)
+                .margin({ bottom: 6 })
+              Text(`¥${this.duesStats?.pendingAmount || 0}`)
+                .fontSize(24)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(PRIMARY_COLOR)
+            }
+            .layoutWeight(1)
+            .alignItems(HorizontalAlign.Start)
+
+            Column()
+              .width(1)
+              .height(40)
+              .backgroundColor(BG_GRAY)
+
+            Column() {
+              Text('已缴金额')
+                .fontSize(12)
+                .fontColor(TEXT_SECONDARY)
+                .margin({ bottom: 6 })
+              Text(`¥${this.duesStats?.paidAmount || 0}`)
+                .fontSize(24)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(SUCCESS_COLOR)
+            }
+            .layoutWeight(1)
+            .alignItems(HorizontalAlign.End)
+          }
+          .width('100%')
         }
+        .width('100%')
+        .padding(20)
+        .backgroundColor(CARD_BG)
+        .borderRadius(16)
+        .shadow({ radius: 4, color: 'rgba(0, 0, 0, 0.06)', offsetY: 4 })
+        .margin({ left: 16, right: 16, top: -20, bottom: 16 })
+
+        // 3. 核心服务
+        Column() {
+          Text('核心服务')
+            .fontSize(12)
+            .fontColor(TEXT_GRAY)
+            .margin({ bottom: 8, left: 4 })
+          Column() {
+            this.MenuItemCustom('个人信息', (): void => { this.navigateToPersonalInfo(); })
+            Divider().color(BG_GRAY)
+            this.MenuItemCustom('党费缴纳', (): void => { this.navigateToDuesPayment(); })
+          }
+          .width('100%')
+          .padding({ left: 16, right: 16 })
+          .backgroundColor(CARD_BG)
+          .borderRadius(14)
+          .shadow({ radius: 2, color: 'rgba(0, 0, 0, 0.04)', offsetY: 2 })
+        }
+        .width('100%')
+        .margin({ left: 16, right: 16, bottom: 16 })
+
+        // 4. 账号安全
+        Column() {
+          Text('账号安全')
+            .fontSize(12)
+            .fontColor(TEXT_GRAY)
+            .margin({ bottom: 8, left: 4 })
+          Column() {
+            this.MenuItem('密码修改', 'pages/PasswordChangePage')
+            Divider().color(BG_GRAY)
+            this.MenuItem('登录日志', 'pages/LoginLogsPage')
+          }
+          .width('100%')
+          .padding({ left: 16, right: 16 })
+          .backgroundColor(CARD_BG)
+          .borderRadius(14)
+          .shadow({ radius: 2, color: 'rgba(0, 0, 0, 0.04)', offsetY: 2 })
+        }
+        .width('100%')
+        .margin({ left: 16, right: 16, bottom: 16 })
+
+        // 5. 系统设置
+        Column() {
+          Text('系统设置')
+            .fontSize(12)
+            .fontColor(TEXT_GRAY)
+            .margin({ bottom: 8, left: 4 })
+          Column() {
+            this.MenuItemCustom('消息提醒', (): void => {
+              promptAction.showToast({ message: '消息设置功能开发中', duration: 2000 });
+            })
+            Divider().color(BG_GRAY)
+            this.MenuItemCustom('清理缓存', (): void => { this.clearCache(); })
+            Divider().color(BG_GRAY)
+            this.MenuItemCustom('版本更新', (): void => { this.checkForUpdates(); })
+            Divider().color(BG_GRAY)
+            this.MenuItemCustom('关于我们', (): void => {
+              promptAction.showToast({ message: '关于我们功能开发中', duration: 2000 });
+            })
+          }
+          .width('100%')
+          .padding({ left: 16, right: 16 })
+          .backgroundColor(CARD_BG)
+          .borderRadius(14)
+          .shadow({ radius: 2, color: 'rgba(0, 0, 0, 0.04)', offsetY: 2 })
+        }
+        .width('100%')
+        .margin({ left: 16, right: 16, bottom: 16 })
+
+        // 6. 管理功能
+        if (this.user?.role === 'admin' || this.user?.role === 'branch_admin') {
+          Column() {
+            Text('管理后台')
+              .fontSize(12)
+              .fontColor(TEXT_GRAY)
+              .margin({ bottom: 8, left: 4 })
+            Column() {
+              this.MenuItemCustom('用户管理', (): void => {
+                promptAction.showToast({ message: '用户管理功能开发中', duration: 2000 });
+              })
+              Divider().color(BG_GRAY)
+              this.MenuItemCustom('数据统计', (): void => {
+                promptAction.showToast({ message: '数据统计功能开发中', duration: 2000 });
+              })
+            }
+            .width('100%')
+            .padding({ left: 16, right: 16 })
+            .backgroundColor(CARD_BG)
+            .borderRadius(14)
+            .shadow({ radius: 2, color: 'rgba(0, 0, 0, 0.04)', offsetY: 2 })
+          }
+          .width('100%')
+          .margin({ left: 16, right: 16, bottom: 16 })
+        }
+
+        // 7. 退出登录
+        Button('退出登录')
+          .width('100%')
+          .height(50)
+          .fontSize(16)
+          .fontColor(PRIMARY_COLOR)
+          .backgroundColor(CARD_BG)
+          .borderRadius(14)
+          .margin({ left: 16, right: 16, top: 8, bottom: 40 })
+          .shadow({ radius: 2, color: 'rgba(0, 0, 0, 0.04)', offsetY: 2 })
+          .onClick((): void => { this.logout(); })
+
+        Text('版本 1.0.0')
+          .fontSize(12)
+          .fontColor(TEXT_GRAY)
+          .margin({ bottom: 30 })
       }
-
-      // 退出登录按钮
-      Button('退出登录')
-        .width('90%')
-        .height('48px')
-        .fontSize(16)
-        .fontColor('#FFFFFF')
-        .backgroundColor('#D32F2F')
-        .borderRadius('8px')
-        .margin({ top: '40px', bottom: '30px' })
-        .onClick(() => {
-          this.logout();
-        })
-
-      // 版本信息
-      Text('版本 1.0.0')
-        .fontSize(12)
-        .fontColor('#999999')
-        .margin({ bottom: '20px' })
     }
+    .width('100%')
     .height('100%')
-    .backgroundColor('#F5F5F5')
+    .backgroundColor(BG_GRAY)
+    .scrollBar(BarState.Off)
+    .edgeEffect(EdgeEffect.Spring)
   }
 }

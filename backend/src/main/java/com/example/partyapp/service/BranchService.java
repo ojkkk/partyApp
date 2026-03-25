@@ -61,18 +61,21 @@ public class BranchService {
     // 申请加入支部
     @Transactional
     public BranchApplication applyForBranch(String userId, String branchId) {
-        // 检查是否已经申请过
-        LambdaQueryWrapper<BranchApplication> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(BranchApplication::getUserId, userId)
-               .eq(BranchApplication::getBranchId, branchId);
-        if (branchApplicationMapper.selectCount(wrapper) > 0) {
-            throw new RuntimeException("您已经申请过该支部");
-        }
-
         // 检查用户是否已经属于其他支部
         User user = userMapper.selectById(userId);
         if (user.getBranch() != null && !user.getBranch().isEmpty()) {
             throw new RuntimeException("您已经属于其他支部");
+        }
+
+        // 检查是否已经申请过该支部
+        LambdaQueryWrapper<BranchApplication> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BranchApplication::getUserId, userId)
+               .eq(BranchApplication::getBranchId, branchId);
+        if (branchApplicationMapper.selectCount(wrapper) > 0) {
+            // 检查用户是否已经被踢出该支部（如果用户当前没有支部，则允许重新申请）
+            if (user.getBranch() != null && !user.getBranch().isEmpty()) {
+                throw new RuntimeException("您已经申请过该支部");
+            }
         }
 
         BranchApplication application = new BranchApplication();

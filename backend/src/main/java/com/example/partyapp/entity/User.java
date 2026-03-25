@@ -31,6 +31,8 @@ public class User {
 
     private String email;
 
+    private java.math.BigDecimal duesAmount;
+
     private String avatar;
 
     @TableField(fill = FieldFill.INSERT)

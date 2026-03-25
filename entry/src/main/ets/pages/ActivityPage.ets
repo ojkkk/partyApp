@@ -339,7 +339,7 @@ export struct ActivityPage {
                     
                     // 活动详情
                     Row() {
-                      Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=clock%20icon%20gray&image_size=square')
+                      Image($rawfile('时间.png'))
                         .width(16)
                         .height(16)
                         .margin({ right: 8 })
@@ -351,7 +351,7 @@ export struct ActivityPage {
                     .margin({ top: 12 })
                     
                     Row() {
-                      Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=location%20icon%20gray&image_size=square')
+                      Image($rawfile('地点.png'))
                         .width(16)
                         .height(16)
                         .margin({ right: 8 })
@@ -363,7 +363,7 @@ export struct ActivityPage {
                     .margin({ top: 8 })
                     
                     Row() {
-                      Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=people%20icon%20gray&image_size=square')
+                      Image($rawfile('人员报名.png'))
                         .width(16)
                         .height(16)
                         .margin({ right: 8 })
@@ -384,8 +384,8 @@ export struct ActivityPage {
                           .padding({ left: 16, right: 16 })
                           .backgroundColor('#FFFFFF')
                           .borderWidth(1)
-                          .borderColor('#007AFF')
-                          .fontColor('#007AFF')
+                          .borderColor('#FF3B30')
+                          .fontColor('#FF3B30')
                           .borderRadius(16)
                           .margin({ right: 12 })
                           .onClick(() => {

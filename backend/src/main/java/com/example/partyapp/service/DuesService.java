@@ -87,7 +87,7 @@ public class DuesService {
 
     // 为用户生成每日的党费记录
     @Transactional
-    public void generateDailyDues(String userId) {
+    public void generateDailyDues(String userId, java.math.BigDecimal duesAmount) {
         LocalDate today = LocalDate.now();
         
         LambdaQueryWrapper<DuesPayment> wrapper = new LambdaQueryWrapper<>();
@@ -97,7 +97,7 @@ public class DuesService {
             DuesPayment payment = new DuesPayment();
             payment.setUserId(userId);
             payment.setPaymentMonth(today);
-            payment.setAmount(new BigDecimal("0.60")); // 每天0.6元
+            payment.setAmount(duesAmount != null ? duesAmount : new java.math.BigDecimal("0.60")); // 使用用户设置的金额，默认0.6元
             payment.setPaymentStatus("pending"); // 默认待支付状态
             payment.setCreatedAt(LocalDateTime.now());
             payment.setUpdatedAt(LocalDateTime.now());
@@ -108,7 +108,7 @@ public class DuesService {
     // 为用户生成当月的党费记录（保留旧方法，确保兼容性）
     @Transactional
     public void generateMonthlyDues(String userId) {
-        generateDailyDues(userId);
+        generateDailyDues(userId, new java.math.BigDecimal("0.60"));
     }
     
     // 批量缴纳党费

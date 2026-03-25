@@ -3,6 +3,9 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { StorageService } from '../services/StorageService';
 
+
+// 在onWindowStageCreate方法中初始化
+
 const DOMAIN = 0x0000;
 
 export default class EntryAbility extends UIAbility {
@@ -32,6 +35,7 @@ export default class EntryAbility extends UIAbility {
           return;
         }
         hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
+
       });
     } else {
       windowStage.loadContent('pages/LoginPage', (err) => {
@@ -40,7 +44,9 @@ export default class EntryAbility extends UIAbility {
           return;
         }
         hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the login page.');
+
       });
+
     }
   }
 

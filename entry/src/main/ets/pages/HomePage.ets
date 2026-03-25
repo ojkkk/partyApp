@@ -651,7 +651,7 @@ export struct HomePage {
                   this.MenuItem(
                     '人员管理',
                     $rawfile("人员管理.png"),
-                    () => promptAction.showToast({ message: '功能开发中', duration: 2000 })
+                    () => router.pushUrl({ url: 'pages/PersonnelManagementPage' })
                   )
                 }
               }

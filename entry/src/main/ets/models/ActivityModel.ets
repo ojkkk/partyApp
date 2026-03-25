@@ -104,11 +104,11 @@ export class ActivityService {
   }
 
   async uploadSummary(id: string, summary: string, summaryImageUrl?: string): Promise<ApiResponse<boolean>> {
-    const params = new SummaryParams(summary);
+    let url = `/api/activities/${id}/summary?summary=${encodeURIComponent(summary)}`;
     if (summaryImageUrl) {
-      params.summaryImageUrl = summaryImageUrl;
+      url += `&summaryImageUrl=${encodeURIComponent(summaryImageUrl)}`;
     }
-    return await NetworkService.put<ApiResponse<boolean>>(`/api/activities/${id}/summary`, params);
+    return await NetworkService.put<ApiResponse<boolean>>(url);
   }
 
   async search(keyword: string): Promise<ApiResponse<Activity[]>> {
