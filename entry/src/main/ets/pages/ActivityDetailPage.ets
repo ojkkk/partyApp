@@ -349,7 +349,7 @@ export struct ActivityDetailPage {
                     .fontSize(14)
                     .fontColor('#666666')
                     .margin({ right: 12 })
-                  Text(`${this.activity.participantCount}/${this.activity.maxParticipants}`)
+                  Text(`${this.activity.participantCount || 0}/${this.activity.maxParticipants}`)
                     .fontSize(14)
                     .fontColor('#D32F2F')
                     .fontWeight(FontWeight.Medium)

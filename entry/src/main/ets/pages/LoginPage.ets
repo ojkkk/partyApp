@@ -2,6 +2,17 @@ import { UserService, ApiResponse, LoginResponse } from '../models/UserModel';
 import router from '@ohos.router';
 import { StorageService } from '../services/StorageService';
 import promptAction from '@ohos.promptAction';
+import font from '@ohos.font';
+// 🚩 党建红色系 标准配色
+const PARTY_RED: string = '#CE0000';       // 标准党旗红
+const PARTY_RED_DARK: string = '#A80000';  // 深邃红
+const PARTY_RED_LIGHT: string = '#FFEBEB'; // 浅红背景
+const GRADIENT_BG: string = 'linear-gradient(180deg, #FFEBEB 0%, #FFFFFF 100%)'; // 庄重渐变
+const CARD_WHITE: string = '#FFFFFF';       // 卡片白
+const TEXT_MAIN: string = '#212121';        // 主文字
+const TEXT_SUB: string = '#757575';         // 次文字
+const BORDER_LIGHT: string = '#FFCDCD';      // 浅红边框
+const SHADOW_RED: string = 'rgba(206, 0, 0, 0.18)'; // 红色阴影
 
 @Entry
 @Component
@@ -11,7 +22,22 @@ struct LoginPage {
   @State password: string = '';
   @State errorMessage: string = '';
   @State isLoading: boolean = false;
+  @State fontLoaded: boolean = false; // 标记字体是否加载完成
 
+  aboutToAppear() {
+    try {
+      // 同步注册 rawfile 中的华文中宋字体
+      font.registerFont({
+        familyName: 'HWST', // 自定义字体别名
+        familySrc: $rawfile('华文中宋.ttf')
+      });
+
+      console.info('华文中宋字体注册成功');
+      this.fontLoaded = true; // 直接标记加载完成
+    } catch (err) {
+      console.error('字体注册失败:', JSON.stringify(err));
+    }
+  }
   async login() {
     if (!this.username || !this.password) {
       this.errorMessage = '请输入用户名和密码';
@@ -23,7 +49,7 @@ struct LoginPage {
 
     try {
       const response: ApiResponse<LoginResponse> = await this.userService.login(this.username, this.password);
-      
+
       if (response.code === 200 && response.data) {
         await StorageService.setItem('user', response.data.user);
         await StorageService.setItem('token', response.data.token);
@@ -46,112 +72,186 @@ struct LoginPage {
     }
   }
 
+
   build() {
-    Column() {
-      Text('党建工作APP')
-        .fontSize(32)
-        .fontWeight(FontWeight.Bold)
-        .fontColor('#D32F2F')
-        .margin({ top: '80px', bottom: '60px' })
-
+    // 🚩 根容器：Stack布局叠加背景红旗装饰
+    Stack() {
+      // 红旗装饰层
       Column() {
-        Column() {
-          Text('用户名')
-            .fontSize(16)
-            .fontColor('#333333')
-            .width('100%')
-            .margin({ bottom: '10px' })
-          
-          TextInput({ placeholder: '请输入用户名' })
-            .width('100%')
-            .height('150px')
-            .onChange((value: string) => {
-              this.username = value;
-            })
-            .enabled(!this.isLoading)
-        }
-        .width('100%')
-        .margin({ bottom: '24px' })
-
-        Column() {
-          Text('密码')
-            .fontSize(16)
-            .fontColor('#333333')
-            .width('100%')
-            .margin({ bottom: '10px' })
-          
-          TextInput({ placeholder: '请输入密码' })
-            .type(InputType.Password)
-            .width('100%')
-            .height('150px')
-            .onChange((value: string) => {
-              this.password = value;
-            })
-            .enabled(!this.isLoading)
-        }
-        .width('100%')
-        .margin({ bottom: '24px' })
-
-        if (this.errorMessage) {
-          Text(this.errorMessage)
-            .fontSize(14)
-            .fontColor('#D32F2F')
-            .margin({ bottom: '20px' })
-        }
-
-        Button(this.isLoading ? '登录中...' : '登录')
-          .width('100%')
-          .height('160px')
-          .fontSize(18)
-          .fontWeight(FontWeight.Medium)
-          .fontColor('#FFFFFF')
-          .backgroundColor('#D32F2F')
-          .borderRadius('60px')
-          .margin({ top: '10px' })
-          .enabled(!this.isLoading)
-          .onClick(() => {
-            this.login();
-          })
-
         Row() {
-          Text('还没有账号？')
-            .fontSize(15)
-            .fontColor('#666666')
-          Text('立即注册')
-            .fontSize(15)
-            .fontColor('#D32F2F')
-            .fontWeight(FontWeight.Medium)
-            .margin({ left: '8px' })
-            .onClick(() => {
-              router.pushUrl({
-                url: 'pages/RegisterPage'
-              });
-            })
-        }
-        .margin({ top: '30px' })
-      }
-      .width('88%')
+          // 左上角红旗装饰
+          Image($rawfile('红旗-顶部.png'))
+            .width('100%')
+            .height(250)
+            .opacity(0.8)
+            .margin({ top: 0})
+            .objectFit((ImageFit.Cover))
 
-      Column() {
-        Text('测试账号:')
-          .fontSize(14)
-          .fontColor('#999999')
-          .margin({ top: '80px', bottom: '12px' })
-        Text('系统管理员: admin / admin123')
-          .fontSize(13)
-          .fontColor('#999999')
-          .margin({ bottom: '6px' })
-        Text('支部管理员: branch / branch123')
-          .fontSize(13)
-          .fontColor('#999999')
-          .margin({ bottom: '6px' })
-        Text('普通党员: member / member123')
-          .fontSize(13)
-          .fontColor('#999999')
+
+
+
+
+        }
+        .width('100%')
+
+
       }
+      .width('100%')
+      .height('100%')
+
+      // 底部长城-红背景
+      Image($rawfile('长城-红.png'))
+        .width('100%')
+        .height(200)
+        .objectFit(ImageFit.Cover)
+        .opacity(1)
+        .position({ y: '80%' })
+
+      // 2. 内容层：登录表单
+      Column() {
+        // 顶部党建标识区域
+        Column() {
+          // 党徽图标（核心标识，使用本地资源）
+          Image($rawfile('党徽黄色.png'))
+            .width(90)
+            .height(90)
+            .margin({ bottom: 40 })
+            .shadow({ radius: 15, color: SHADOW_RED, offsetY: 5 })
+
+
+          // 主标题
+          Text('智慧党建')
+            .fontSize(38)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(PARTY_RED)
+            .margin({ bottom: 8 })
+            .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+
+          // 副标题
+          Text('不忘初心 牢记使命')
+            .fontSize(17)
+            .fontColor(PARTY_RED_DARK)
+            .fontWeight(FontWeight.Medium)
+            .letterSpacing(2)
+            .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+        }
+        .margin({ top: 70, bottom: 30 })
+
+        // 登录卡片
+        Column() {
+
+
+          // 用户名输入框
+          Column({ space: 10 }) {
+            Text('用户名')
+              .fontSize(16)
+              .fontColor(TEXT_MAIN)
+              .width('100%')
+              .fontWeight(FontWeight.Medium)
+
+
+            TextInput({ placeholder: '请输入用户名', text: this.username })
+              .width('100%')
+              .height(54)
+
+              .fontSize(16)
+
+              .backgroundColor(CARD_WHITE)
+              .border({ width: 1.2, color: BORDER_LIGHT, radius: 14 })
+              .padding({ left: 18, right: 18 })
+              .onChange((value: string) => {
+                this.username = value;
+              })
+              .enabled(!this.isLoading)
+          }
+          .width('100%')
+          .margin({ bottom: 26 })
+
+          // 密码输入框
+          Column({ space: 10 }) {
+            Text('密码')
+              .fontSize(16)
+              .fontColor(TEXT_MAIN)
+              .width('100%')
+              .fontWeight(FontWeight.Medium)
+
+
+            TextInput({ placeholder: '请输入密码', text: this.password })
+              .type(InputType.Password)
+              .width('100%')
+              .height(54)
+
+              .fontSize(16)
+
+              .backgroundColor(CARD_WHITE)
+              .border({ width: 1.2, color: BORDER_LIGHT, radius: 14 })
+              .padding({ left: 18, right: 18 })
+              .onChange((value: string) => {
+                this.password = value;
+              })
+              .enabled(!this.isLoading)
+          }
+          .width('100%')
+          .margin({ bottom: 18 })
+
+          // 错误提示
+          if (this.errorMessage) {
+            Text(this.errorMessage)
+              .fontSize(14)
+              .fontColor(PARTY_RED)
+              .width('100%')
+              .textAlign(TextAlign.Center)
+              .margin({ bottom: 18 })
+          }
+
+          // 登录按钮（庄重红渐变）
+          Button(this.isLoading ? '登录中...' : '登    录')
+            .width('100%')
+            .height(58)
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .fontFamily( 'HarmonyOS Sans')
+            .fontColor('#FFFFFF')
+            .backgroundColor(this.isLoading ? '#BDBDBD' : PARTY_RED)
+            .borderRadius(14)
+            .enabled(!this.isLoading)
+            .shadow({ radius: 10, color: SHADOW_RED, offsetY: 5 })
+            .onClick(() => {
+              this.login();
+            })
+
+          // 注册跳转
+          Row() {
+            Text('还没有账号？')
+              .fontSize(15)
+              .fontColor(TEXT_SUB)
+
+            Text('立即注册')
+              .fontSize(15)
+              .fontColor(PARTY_RED)
+              .fontWeight(FontWeight.Medium)
+              .onClick(() => {
+                router.pushUrl({
+                  url: 'pages/RegisterPage'
+                });
+              })
+          }
+          .margin({ top: 30,bottom:-10 })
+        }
+        .width('90%')
+        .padding({ top: 36, bottom: 36, left: 28, right: 28 })
+        .backgroundColor(CARD_WHITE)
+        .borderRadius(22)
+        .shadow({ radius: 15, color: 'rgba(0,0,0,0.08)', offsetY: 8 })
+        .border({ width: 1, color: '#FFE0E0' })
+
+
+      }
+      .width('100%')
+      .height('100%')
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F8F9FA')
+    .backgroundColor(GRADIENT_BG)
   }
 }

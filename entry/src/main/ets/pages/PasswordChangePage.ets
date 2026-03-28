@@ -3,7 +3,7 @@ import { UserService, ApiResponse } from '../models/UserModel';
 import promptAction from '@ohos.promptAction';
 
 // 设计系统常量
-const PRIMARY_COLOR: string = '#D32F2F'; // 保持主色不变
+const PRIMARY_COLOR: string = '#D32F2F';
 const BG_GRAY: string = '#F8FAFC';
 const CARD_BG: string = '#FFFFFF';
 const TEXT_PRIMARY: string = '#1E293B';
@@ -12,6 +12,10 @@ const TEXT_HINT: string = '#94A3B8';
 const BORDER_COLOR: string = '#E2E8F0';
 const SHADOW_LOW: string = 'rgba(211, 47, 47, 0.1)';
 const SHADOW_MEDIUM: string = 'rgba(211, 47, 47, 0.2)';
+// 新增统一间距常量
+const PADDING_HORIZONTAL: number = 20; // 左右边距（解决贴边核心）
+const SPACE_MD: number = 16;
+const SPACE_LG: number = 24;
 
 @Entry
 @Component
@@ -20,41 +24,36 @@ export struct PasswordChangePage {
   @State newPassword: string = '';
   @State confirmPassword: string = '';
   @State isLoading: boolean = false;
-  @State showPasswordRules: boolean = false;
+
+  // 密码规则校验
+  checkPasswordLength(): boolean {
+    return this.newPassword.length >= 8;
+  }
+  checkPasswordComplex(): boolean {
+    const hasNumber = /\d/.test(this.newPassword);
+    const hasLetter = /[a-zA-Z]/.test(this.newPassword);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(this.newPassword);
+    return hasNumber && hasLetter && hasSpecial;
+  }
 
   async changePassword() {
     if (!this.oldPassword || !this.newPassword || !this.confirmPassword) {
-      promptAction.showToast({
-        message: '请填写所有必填项',
-        duration: 2000
-      });
+      promptAction.showToast({ message: '请填写所有必填项', duration: 2000 });
       return;
     }
 
     if (this.newPassword !== this.confirmPassword) {
-      promptAction.showToast({
-        message: '两次输入的新密码不一致',
-        duration: 2000
-      });
+      promptAction.showToast({ message: '两次输入的新密码不一致', duration: 2000 });
       return;
     }
 
-    // 验证密码格式
-    if (this.newPassword.length < 8) {
-      promptAction.showToast({
-        message: '密码长度至少为8位',
-        duration: 2000
-      });
+    if (!this.checkPasswordLength()) {
+      promptAction.showToast({ message: '密码长度至少为8位', duration: 2000 });
       return;
     }
-    const hasNumber = /\d/.test(this.newPassword);
-    const hasLetter = /[a-zA-Z]/.test(this.newPassword);
-    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(this.newPassword);
-    if (!hasNumber || !hasLetter || !hasSpecial) {
-      promptAction.showToast({
-        message: '密码必须包含数字、英文和特殊字符',
-        duration: 2000
-      });
+
+    if (!this.checkPasswordComplex()) {
+      promptAction.showToast({ message: '密码必须包含数字、英文和特殊字符', duration: 2000 });
       return;
     }
 
@@ -63,23 +62,14 @@ export struct PasswordChangePage {
       const userService = new UserService();
       const response: ApiResponse<boolean> = await userService.changePassword(this.oldPassword, this.newPassword);
       if (response.code === 200 && response.data) {
-        promptAction.showToast({
-          message: '密码修改成功',
-          duration: 2000
-        });
+        promptAction.showToast({ message: '密码修改成功', duration: 2000 });
         router.back();
       } else {
-        promptAction.showToast({
-          message: response.message || '密码修改失败',
-          duration: 2000
-        });
+        promptAction.showToast({ message: response.message || '密码修改失败', duration: 2000 });
       }
     } catch (error) {
       console.error('修改密码失败:', error);
-      promptAction.showToast({
-        message: '修改密码失败',
-        duration: 2000
-      });
+      promptAction.showToast({ message: '修改密码失败', duration: 2000 });
     } finally {
       this.isLoading = false;
     }
@@ -89,175 +79,124 @@ export struct PasswordChangePage {
     Column() {
       // 顶部导航栏
       Row() {
-        Button(){
+        Button() {
           Image($rawfile('返回.png'))
             .width(24)
             .height(24)
         }
-          .fontSize(20)
-          .fontColor(PRIMARY_COLOR)
-          .backgroundColor('transparent')
-          .onClick(() => {
-            router.back();
-          });
+        .backgroundColor('transparent')
+        .onClick(() => router.back());
 
         Text('修改密码')
           .fontSize(18)
           .fontWeight(FontWeight.Medium)
           .fontColor(TEXT_PRIMARY)
           .layoutWeight(1)
-          .textAlign(TextAlign.Center)
-        Blank()
-          .width(24)
+          .textAlign(TextAlign.Center);
 
-          .margin({right:0})
+        Blank().width(24);
       }
       .width('100%')
       .height(56)
-      .padding({ left: 16, right: 16 })
+      .padding({ left: PADDING_HORIZONTAL, right: PADDING_HORIZONTAL })
       .backgroundColor(CARD_BG)
       .borderWidth({ bottom: 1 })
       .borderColor(BORDER_COLOR)
-      .shadow({ radius: 4, color: SHADOW_LOW, offsetY: 2 })
+      .shadow({ radius: 4, color: SHADOW_LOW, offsetY: 2 });
 
-      // 表单内容
+      // 表单内容（核心：统一左右边距，解决贴边）
       Scroll() {
-        Column() {
-          // 旧密码
-          Column() {
-            Text('旧密码')
-              .fontSize(14)
-              .fontColor(TEXT_SECONDARY)
-              .width('100%')
-              .margin({ bottom: 8 });
+        Column({ space: SPACE_LG }) {
+          // 旧密码输入框
+          this.buildInputItem('旧密码', '请输入旧密码', this.oldPassword, (value) => this.oldPassword = value);
 
-            TextInput({ placeholder: '请输入旧密码', text: this.oldPassword })
-              .type(InputType.Password)
-              .width('100%')
-              .height(52)
-              .fontSize(15)
-              .fontColor(TEXT_PRIMARY)
-              .placeholderColor(TEXT_HINT)
-              .backgroundColor(CARD_BG)
-              .borderRadius(12)
-              .borderWidth(1)
-              .borderColor(BORDER_COLOR)
-              .onChange((value: string) => {
-                this.oldPassword = value;
-              })
-              .enabled(!this.isLoading);
-          }
-          .width('100%')
-          .margin({ top: 24, left: 24, right: 24 })
+          // 新密码输入框
+          this.buildInputItem('新密码', '请输入新密码', this.newPassword, (value) => this.newPassword = value);
 
-          // 新密码
-          Column() {
-            Text('新密码')
-              .fontSize(14)
-              .fontColor(TEXT_SECONDARY)
-              .width('100%')
-              .margin({ bottom: 8 });
+          // 密码规则提示（优化排版）
+          this.buildPasswordRule();
 
-            TextInput({ placeholder: '请输入新密码', text: this.newPassword })
-              .type(InputType.Password)
-              .width('100%')
-              .height(52)
-              .fontSize(15)
-              .fontColor(TEXT_PRIMARY)
-              .placeholderColor(TEXT_HINT)
-              .backgroundColor(CARD_BG)
-              .borderRadius(12)
-              .borderWidth(1)
-              .borderColor(BORDER_COLOR)
-              .onChange((value: string) => {
-                this.newPassword = value;
-              })
-              .enabled(!this.isLoading);
-          }
-          .width('100%')
-          .margin({ left: 24, right: 24, bottom: 24 })
-
-          // 密码规则提示
-          Column() {
-            Text('密码要求')
-              .fontSize(13)
-              .fontColor(TEXT_HINT)
-              .margin({ bottom: 4 });
-
-            Row() {
-              Text('• 至少8位')
-                .fontSize(13)
-                .fontColor(this.newPassword.length >= 8 ? TEXT_PRIMARY : TEXT_HINT)
-                .margin({ right: 8 });
-
-              Text('• 包含数字、字母和特殊字符')
-                .fontSize(13)
-                .fontColor(
-                  this.newPassword.length >= 8 &&
-                  /\d/.test(this.newPassword) &&
-                  /[a-zA-Z]/.test(this.newPassword) &&
-                  /[!@#$%^&*(),.?":{}|<>]/.test(this.newPassword) ?
-                    TEXT_PRIMARY : TEXT_HINT
-                );
-            }
-            .width('100%')
-            .margin({ top: 4 });
-          }
-          .width('100%')
-          .margin({ left: 24, right: 24, bottom: 16 })
-
-          // 确认密码
-          Column() {
-            Text('确认新密码')
-              .fontSize(14)
-              .fontColor(TEXT_SECONDARY)
-              .width('100%')
-              .margin({ bottom: 8 });
-
-            TextInput({ placeholder: '请再次输入新密码', text: this.confirmPassword })
-              .type(InputType.Password)
-              .width('100%')
-              .height(52)
-              .fontSize(15)
-              .fontColor(TEXT_PRIMARY)
-              .placeholderColor(TEXT_HINT)
-              .backgroundColor(CARD_BG)
-              .borderRadius(12)
-              .borderWidth(1)
-              .borderColor(BORDER_COLOR)
-              .onChange((value: string) => {
-                this.confirmPassword = value;
-              })
-              .enabled(!this.isLoading);
-          }
-          .width('100%')
-          .margin({ left: 24, right: 24, bottom: 24 })
+          // 确认密码输入框
+          this.buildInputItem('确认新密码', '请再次输入新密码', this.confirmPassword, (value) => this.confirmPassword = value);
 
           // 保存按钮
-          Button(this.isLoading ? '修改中...' : '修改密码')
-            .width('90%')
-            .height(56)
-            .fontSize(16)
-            .fontColor('#FFFFFF')
-            .backgroundColor(PRIMARY_COLOR)
-            .borderRadius(12)
-            .shadow({ radius: 8, color: SHADOW_MEDIUM, offsetY: 4 })
-            .margin({ top: 24, bottom: 32 })
-            .enabled(!this.isLoading)
-            .onClick(async () => {
-              await this.changePassword();
-            });
+          this.buildSubmitButton();
         }
         .width('100%')
-        .padding({ bottom: 32 })
+        .padding({ top: SPACE_LG, bottom: SPACE_LG, left: PADDING_HORIZONTAL, right: PADDING_HORIZONTAL });
       }
       .flexGrow(1)
       .scrollBar(BarState.Off)
-      .edgeEffect(EdgeEffect.Spring)
-      .align(Alignment.TopStart)
+      .edgeEffect(EdgeEffect.Spring);
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(BG_GRAY)
+    .backgroundColor(BG_GRAY);
+  }
+
+  // 封装输入框组件（代码复用 + 统一样式）
+  @Builder
+  buildInputItem(label: string, placeholder: string, text: string, onChange: (value: string) => void) {
+    Column({ space: 8 }) {
+      Text(label)
+        .fontSize(14)
+        .fontColor(TEXT_SECONDARY)
+        .width('100%');
+
+      TextInput({ placeholder, text })
+        .type(InputType.Password)
+        .width('100%')
+        .height(52)
+        .fontSize(15)
+        .fontColor(TEXT_PRIMARY)
+        .placeholderColor(TEXT_HINT)
+        .backgroundColor(CARD_BG)
+        .borderRadius(12)
+        .borderWidth(1)
+        .borderColor(BORDER_COLOR)
+        .onChange(onChange)
+        .enabled(!this.isLoading)
+        .padding({ left: 16, right: 16 });
+    }
+    .width('100%');
+  }
+
+  // 封装密码规则组件
+  @Builder
+  buildPasswordRule() {
+    Column({ space: 4 }) {
+      Text('密码要求')
+        .fontSize(13)
+        .fontColor(TEXT_HINT)
+        .width('100%');
+
+      Row({ space: 12 }) {
+        Text('• 至少8位')
+          .fontSize(13)
+          .fontColor(this.checkPasswordLength() ? PRIMARY_COLOR : TEXT_HINT);
+
+        Text('• 数字+字母+特殊字符')
+          .fontSize(13)
+          .fontColor(this.checkPasswordComplex() ? PRIMARY_COLOR : TEXT_HINT);
+      }
+      .width('100%');
+    }
+    .width('100%');
+  }
+
+  // 封装提交按钮
+  @Builder
+  buildSubmitButton() {
+    Button(this.isLoading ? '修改中...' : '修改密码')
+      .width('100%')
+      .height(56)
+      .fontSize(16)
+      .fontColor('#FFFFFF')
+      .backgroundColor(this.isLoading ? TEXT_HINT : PRIMARY_COLOR)
+      .borderRadius(12)
+      .shadow({ radius: 8, color: SHADOW_MEDIUM, offsetY: 4 })
+      .enabled(!this.isLoading)
+      .onClick(async () => await this.changePassword())
+      .margin({ top: 8 });
   }
 }

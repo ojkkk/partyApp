@@ -1,6 +1,18 @@
 import { UserService, RegisterRequest, ApiResponse, User } from '../models/UserModel';
 import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
+import font from '@ohos.font';
+
+// 🚩 党建红色系 标准配色
+const PARTY_RED: string = '#CE0000';       // 标准党旗红
+const PARTY_RED_DARK: string = '#A80000';  // 深邃红
+const PARTY_RED_LIGHT: string = '#FFEBEB'; // 浅红背景
+const GRADIENT_BG: string = 'linear-gradient(180deg, #FFEBEB 0%, #FFFFFF 100%)'; // 庄重渐变
+const CARD_WHITE: string = '#FFFFFF';       // 卡片白
+const TEXT_MAIN: string = '#212121';        // 主文字
+const TEXT_SUB: string = '#757575';         // 次文字
+const BORDER_LIGHT: string = '#FFCDCD';      // 浅红边框
+const SHADOW_RED: string = 'rgba(206, 0, 0, 0.18)'; // 红色阴影
 
 // 【修复】API 20 兼容的自定义日期选择器
 @CustomDialog
@@ -77,6 +89,22 @@ struct RegisterPage {
   @State email: string = '';
   @State errorMessage: string = '';
   @State isLoading: boolean = false;
+  @State fontLoaded: boolean = false; // 标记字体是否加载完成
+
+  aboutToAppear() {
+    try {
+      // 同步注册 rawfile 中的华文中宋字体
+      font.registerFont({
+        familyName: 'HWST', // 自定义字体别名
+        familySrc: $rawfile('华文中宋.ttf')
+      });
+
+      console.info('华文中宋字体注册成功');
+      this.fontLoaded = true; // 直接标记加载完成
+    } catch (err) {
+      console.error('字体注册失败:', JSON.stringify(err));
+    }
+  }
   // 自定义对话框控制器
   datePickerDialogController: CustomDialogController = new CustomDialogController({
     builder: DatePickerDialog({
@@ -188,254 +216,352 @@ struct RegisterPage {
   }
 
   build() {
-    Column() {
-      Text('注册账号')
-        .fontSize(32)
-        .fontWeight(FontWeight.Bold)
-        .fontColor('#D32F2F')
-        .margin({ top: '40px', bottom: '30px' })
+    // 🚩 根容器：Stack布局叠加背景红旗装饰
+    Stack() {
+      // 红旗装饰层
 
-      Scroll() {
+      
+      // 底部长城-红背景
+      Image($rawfile('长城-红.png'))
+        .width('100%')
+        .height(200)
+        .objectFit(ImageFit.Cover)
+        .opacity(0.2)
+        .position({ y: '80%' })
+
+      // 内容层：注册表单
+      Column() {
+        // 顶部党建标识区域
+
+        // 注册卡片
         Column() {
-          Column() {
-            Text('用户名')
-              .fontSize(16)
-              .fontColor('#333333')
-              .width('100%')
-              .margin({ bottom: '10px' })
+          // 表单标题
+          Text('用户注册')
+            .fontSize(23)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(TEXT_MAIN)
+            .width('100%')
+            .textAlign(TextAlign.Center)
+            .margin({ bottom: 35 })
+            .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
 
-            TextInput({ placeholder: '请输入用户名' })
-              .width('100%')
-              .height('150px')
-              .onChange((value: string) => {
-                this.username = value;
-              })
-              .enabled(!this.isLoading)
-          }
-          .width('100%')
-          .margin({ bottom: '20px' })
-
-          Column() {
-            Text('密码')
-              .fontSize(16)
-              .fontColor('#333333')
-              .width('100%')
-              .margin({ bottom: '10px' })
-
-            TextInput({ placeholder: '请输入密码' })
-              .type(InputType.Password)
-              .width('100%')
-              .height('150px')
-              .onChange((value: string) => {
-                this.password = value;
-              })
-              .enabled(!this.isLoading)
-          }
-          .width('100%')
-          .margin({ bottom: '20px' })
-
-          Column() {
-            Text('姓名')
-              .fontSize(16)
-              .fontColor('#333333')
-              .width('100%')
-              .margin({ bottom: '10px' })
-
-            TextInput({ placeholder: '请输入姓名' })
-              .width('100%')
-              .height('150px')
-              .onChange((value: string) => {
-                this.name = value;
-              })
-              .enabled(!this.isLoading)
-          }
-          .width('100%')
-          .margin({ bottom: '20px' })
-
-          Column() {
-            Text('党员编号')
-              .fontSize(16)
-              .fontColor('#333333')
-              .width('100%')
-              .margin({ bottom: '10px' })
-
-            TextInput({ placeholder: '请输入党员编号' })
-              .width('100%')
-              .height('150px')
-              .onChange((value: string) => {
-                this.partyId = value;
-              })
-              .enabled(!this.isLoading)
-          }
-          .width('100%')
-          .margin({ bottom: '20px' })
-
-          Column() {
-            Text('角色选择')
-              .fontSize(16)
-              .fontColor('#333333')
-              .width('100%')
-              .margin({ bottom: '10px' })
-
-            Row() {
-              Radio({ value: 'member', group: 'role' })
-                .checked(this.role === 'member')
-                .onChange((isChecked: boolean) => {
-                  if (isChecked) {
-                    this.role = 'member';
-                  }
-                })
-                .enabled(!this.isLoading)
-              Text('普通党员')
-                .fontSize(15)
-                .fontColor('#333333')
-                .margin({ left: '10px' })
-
-              Radio({ value: 'branch_admin', group: 'role' })
-                .checked(this.role === 'branch_admin')
-                .onChange((isChecked: boolean) => {
-                  if (isChecked) {
-                    this.role = 'branch_admin';
-                  }
-                })
-                .enabled(!this.isLoading)
-                .margin({ left: '40px' })
-              Text('支部管理员')
-                .fontSize(15)
-                .fontColor('#333333')
-                .margin({ left: '10px' })
-            }
-          }
-          .width('100%')
-          .margin({ bottom: '20px' })
-
-          if (this.role === 'branch_admin') {
+          // 滚动表单
+          Scroll() {
             Column() {
-              Text('管理支部')
-                .fontSize(16)
-                .fontColor('#333333')
-                .width('100%')
-                .margin({ bottom: '10px' })
+              // 用户名输入框
+              Column({ space: 10 }) {
+                Text('用户名')
+                  .fontSize(16)
+                  .fontColor(TEXT_MAIN)
+                  .width('100%')
+                  .fontWeight(FontWeight.Medium)
+                  .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
 
-              TextInput({ placeholder: '请输入管理的支部名称' })
+                TextInput({ placeholder: '请输入用户名' })
+                  .width('100%')
+                  .height(54)
+                  .fontSize(16)
+                  .backgroundColor(CARD_WHITE)
+                  .border({ width: 1.2, color: BORDER_LIGHT, radius: 14 })
+                  .padding({ left: 18, right: 18 })
+                  .onChange((value: string) => {
+                    this.username = value;
+                  })
+                  .enabled(!this.isLoading)
+              }
+              .width('100%')
+              .margin({ bottom: 24 })
+
+              // 密码输入框
+              Column({ space: 10 }) {
+                Text('密码')
+                  .fontSize(16)
+                  .fontColor(TEXT_MAIN)
+                  .width('100%')
+                  .fontWeight(FontWeight.Medium)
+                  .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+
+                TextInput({ placeholder: '请输入密码' })
+                  .type(InputType.Password)
+                  .width('100%')
+                  .height(54)
+                  .fontSize(16)
+                  .backgroundColor(CARD_WHITE)
+                  .border({ width: 1.2, color: BORDER_LIGHT, radius: 14 })
+                  .padding({ left: 18, right: 18 })
+                  .onChange((value: string) => {
+                    this.password = value;
+                  })
+                  .enabled(!this.isLoading)
+              }
+              .width('100%')
+              .margin({ bottom: 24 })
+
+              // 姓名输入框
+              Column({ space: 10 }) {
+                Text('姓名')
+                  .fontSize(16)
+                  .fontColor(TEXT_MAIN)
+                  .width('100%')
+                  .fontWeight(FontWeight.Medium)
+                  .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+
+                TextInput({ placeholder: '请输入姓名' })
+                  .width('100%')
+                  .height(54)
+                  .fontSize(16)
+                  .backgroundColor(CARD_WHITE)
+                  .border({ width: 1.2, color: BORDER_LIGHT, radius: 14 })
+                  .padding({ left: 18, right: 18 })
+                  .onChange((value: string) => {
+                    this.name = value;
+                  })
+                  .enabled(!this.isLoading)
+              }
+              .width('100%')
+              .margin({ bottom: 24 })
+
+              // 党员编号输入框
+              Column({ space: 10 }) {
+                Text('党员编号')
+                  .fontSize(16)
+                  .fontColor(TEXT_MAIN)
+                  .width('100%')
+                  .fontWeight(FontWeight.Medium)
+                  .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+
+                TextInput({ placeholder: '请输入党员编号' })
+                  .width('100%')
+                  .height(54)
+                  .fontSize(16)
+                  .backgroundColor(CARD_WHITE)
+                  .border({ width: 1.2, color: BORDER_LIGHT, radius: 14 })
+                  .padding({ left: 18, right: 18 })
+                  .onChange((value: string) => {
+                    this.partyId = value;
+                  })
+                  .enabled(!this.isLoading)
+              }
+              .width('100%')
+              .margin({ bottom: 24 })
+
+              // 角色选择
+              Column({ space: 10 }) {
+                Text('角色选择')
+                  .fontSize(16)
+                  .fontColor(TEXT_MAIN)
+                  .width('100%')
+                  .fontWeight(FontWeight.Medium)
+                  .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+
+                Row() {
+                  Radio({ value: 'member', group: 'role' })
+                    .checked(this.role === 'member')
+                    .onChange((isChecked: boolean) => {
+                      if (isChecked) {
+                        this.role = 'member';
+                      }
+                    })
+                    .enabled(!this.isLoading)
+                  Text('普通党员')
+                    .fontSize(15)
+                    .fontColor(TEXT_MAIN)
+                    .margin({ left: 10 })
+                    .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+
+                  Radio({ value: 'branch_admin', group: 'role' })
+                    .checked(this.role === 'branch_admin')
+                    .onChange((isChecked: boolean) => {
+                      if (isChecked) {
+                        this.role = 'branch_admin';
+                      }
+                    })
+                    .enabled(!this.isLoading)
+                    .margin({ left: 40 })
+                  Text('支部管理员')
+                    .fontSize(15)
+                    .fontColor(TEXT_MAIN)
+                    .margin({ left: 10 })
+                    .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+                }
+              }
+              .width('100%')
+              .margin({ bottom: 24 })
+
+              if (this.role === 'branch_admin') {
+                Column({ space: 10 }) {
+                  Text('管理支部')
+                    .fontSize(16)
+                    .fontColor(TEXT_MAIN)
+                    .width('100%')
+                    .fontWeight(FontWeight.Medium)
+                    .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+
+                  TextInput({ placeholder: '请输入管理的支部名称' })
+                    .width('100%')
+                    .height(54)
+                    .fontSize(16)
+                    .backgroundColor(CARD_WHITE)
+                    .border({ width: 1.2, color: BORDER_LIGHT, radius: 14 })
+                    .padding({ left: 18, right: 18 })
+                    .onChange((value: string) => {
+                      this.branch = value;
+                    })
+                    .enabled(!this.isLoading)
+                }
                 .width('100%')
-                .height('150px')
-                .onChange((value: string) => {
-                  this.branch = value;
-                })
+                .margin({ bottom: 24 })
+              }
+
+              // 入党日期
+              Column({ space: 10 }) {
+                Text('入党日期')
+                  .fontSize(16)
+                  .fontColor(TEXT_MAIN)
+                  .width('100%')
+                  .fontWeight(FontWeight.Medium)
+                  .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+
+                // 点击触发自定义对话框
+                Text(this.joinDate || '请选择入党日期 (YYYY-MM-DD)')
+                  .width('100%')
+                  .height(54)
+                  .fontSize(16)
+                  .fontColor(this.joinDate ? TEXT_MAIN : TEXT_SUB)
+                  .textAlign(TextAlign.Start)
+                  .padding({ left: 18 })
+                  .backgroundColor(CARD_WHITE)
+                  .border({ width: 1.2, color: BORDER_LIGHT, radius: 14 })
+                  .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+                  .onClick(() => {
+                    if (!this.isLoading) {
+                      this.datePickerDialogController.open();
+                    }
+                  })
+              }
+              .width('100%')
+              .margin({ bottom: 24 })
+
+              // 手机号输入框
+              Column({ space: 10 }) {
+                Text('手机号')
+                  .fontSize(16)
+                  .fontColor(TEXT_MAIN)
+                  .width('100%')
+                  .fontWeight(FontWeight.Medium)
+                  .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+
+                TextInput({ placeholder: '请输入手机号' })
+                  .width('100%')
+                  .height(54)
+                  .fontSize(16)
+                  .backgroundColor(CARD_WHITE)
+                  .border({ width: 1.2, color: BORDER_LIGHT, radius: 14 })
+                  .padding({ left: 18, right: 18 })
+                  .onChange((value: string) => {
+                    this.phone = value;
+                  })
+                  .enabled(!this.isLoading)
+              }
+              .width('100%')
+              .margin({ bottom: 24 })
+
+              // 邮箱输入框
+              Column({ space: 10 }) {
+                Text('邮箱')
+                  .fontSize(16)
+                  .fontColor(TEXT_MAIN)
+                  .width('100%')
+                  .fontWeight(FontWeight.Medium)
+                  .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+
+                TextInput({ placeholder: '请输入邮箱' })
+                  .width('100%')
+                  .height(54)
+                  .fontSize(16)
+                  .backgroundColor(CARD_WHITE)
+                  .border({ width: 1.2, color: BORDER_LIGHT, radius: 14 })
+                  .padding({ left: 18, right: 18 })
+                  .onChange((value: string) => {
+                    this.email = value;
+                  })
+                  .enabled(!this.isLoading)
+              }
+              .width('100%')
+              .margin({ bottom: 18 })
+
+              // 错误提示
+              if (this.errorMessage) {
+                Text(this.errorMessage)
+                  .fontSize(14)
+                  .fontColor(PARTY_RED)
+                  .width('100%')
+                  .textAlign(TextAlign.Center)
+                  .margin({ bottom: 18 })
+                  .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+              }
+
+              // 注册按钮
+              Button(this.isLoading ? '注册中...' : '注     册')
+                .width('100%')
+                .height(58)
+                .fontSize(18)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#FFFFFF')
+                .backgroundColor(this.isLoading ? '#BDBDBD' : PARTY_RED)
+                .borderRadius(14)
                 .enabled(!this.isLoading)
+                .shadow({ radius: 10, color: SHADOW_RED, offsetY: 5 })
+                .fontFamily('HarmonyOS Sans')
+                .onClick(() => {
+                  this.register();
+                })
+
+              // 登录跳转
+              Row() {
+                Text('已有账号？')
+                  .fontSize(15)
+                  .fontColor(TEXT_SUB)
+                  .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+                Text('立即登录')
+                  .fontSize(15)
+                  .fontColor(PARTY_RED)
+                  .fontWeight(FontWeight.Medium)
+                  .margin({ left: 8 })
+                  .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
+                  .onClick(() => {
+                    router.replaceUrl({
+                      url: 'pages/LoginPage'
+                    });
+                  })
+              }
+              .margin({ top: 30, bottom: 40 })
             }
             .width('100%')
-            .margin({ bottom: '20px' })
-          }
-
-          Column() {
-            Text('入党日期')
-              .fontSize(16)
-              .fontColor('#333333')
-              .width('100%')
-              .margin({ bottom: '10px' })
-
-            // 点击触发自定义对话框
-            Text(this.joinDate || '请选择入党日期 (YYYY-MM-DD)')
-              .width('100%')
-              .height('150px')
-              .fontSize(16)
-              .fontColor(this.joinDate ? '#333333' : '#999999')
-              .textAlign(TextAlign.Start)
-              .padding({ left: 10 })
-              .backgroundColor('#FFFFFF')
-              .borderRadius(8)
-              .onClick(() => {
-                if (!this.isLoading) {
-                  this.datePickerDialogController.open();
-                }
-              })
           }
           .width('100%')
-          .margin({ bottom: '20px' })
-
-          Column() {
-            Text('手机号')
-              .fontSize(16)
-              .fontColor('#333333')
-              .width('100%')
-              .margin({ bottom: '10px' })
-
-            TextInput({ placeholder: '请输入手机号' })
-              .width('100%')
-              .height('150px')
-              .onChange((value: string) => {
-                this.phone = value;
-              })
-              .enabled(!this.isLoading)
-          }
-          .width('100%')
-          .margin({ bottom: '20px' })
-
-          Column() {
-            Text('邮箱')
-              .fontSize(16)
-              .fontColor('#333333')
-              .width('100%')
-              .margin({ bottom: '10px' })
-
-            TextInput({ placeholder: '请输入邮箱' })
-              .width('100%')
-              .height('150px')
-              .onChange((value: string) => {
-                this.email = value;
-              })
-              .enabled(!this.isLoading)
-          }
-          .width('100%')
-          .margin({ bottom: '20px' })
-
-          if (this.errorMessage) {
-            Text(this.errorMessage)
-              .fontSize(14)
-              .fontColor('#D32F2F')
-              .margin({ top: '20px', bottom: '10px' })
-          }
-
-          Button(this.isLoading ? '注册中...' : '注册')
-            .width('100%')
-            .height('160px')
-            .fontSize(18)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .backgroundColor('#D32F2F')
-            .borderRadius('60px')
-            .margin({ top: '30px' })
-            .enabled(!this.isLoading)
-            .onClick(() => {
-              this.register();
-            })
-
-          Row() {
-            Text('已有账号？')
-              .fontSize(15)
-              .fontColor('#666666')
-            Text('立即登录')
-              .fontSize(15)
-              .fontColor('#D32F2F')
-              .fontWeight(FontWeight.Medium)
-              .margin({ left: '8px' })
-              .onClick(() => {
-                router.replaceUrl({
-                  url: 'pages/LoginPage'
-                });
-              })
-          }
-          .margin({ top: '30px', bottom: '40px' })
+          .height(600) // 设置固定高度，超出部分可滚动
+          .scrollBar(BarState.Off)
         }
-        .width('88%')
+        .width('90%')
+        .padding({ top: 36, bottom: 36, left: 28, right: 28 })
+        .backgroundColor(CARD_WHITE)
+        .borderRadius(22)
+        .shadow({ radius: 15, color: 'rgba(0,0,0,0.08)', offsetY: 8 })
+        .border({ width: 1, color: '#FFE0E0' })
+
+        // 底部版权
+        Text('© 2026 党建工作平台')
+          .fontSize(12)
+          .fontColor(TEXT_SUB)
+          .margin({ top: 40, bottom: 20 })
+          .fontFamily(this.fontLoaded ? 'HWST' : 'HarmonyOS Sans')
       }
-      .layoutWeight(1)
-      .scrollBar(BarState.Off)
+      .width('100%')
+      .height('100%')
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F8F9FA')
+    .backgroundColor(GRADIENT_BG)
   }
 }

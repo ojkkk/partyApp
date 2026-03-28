@@ -143,7 +143,14 @@ export struct ActivityPage {
         // 更新活动的参与人数
         const activityIndex = this.activities.findIndex(a => a.id === id);
         if (activityIndex !== -1) {
-          this.activities[activityIndex].participantCount++;
+          const activity = this.activities[activityIndex];
+          if (activity) {
+            if (activity.participantCount === undefined) {
+              activity.participantCount = 1;
+            } else {
+              activity.participantCount++;
+            }
+          }
         }
       } else {
         promptAction.showToast({
@@ -172,8 +179,11 @@ export struct ActivityPage {
         this.registeredActivities.set(id, false);
         // 更新活动的参与人数
         const activityIndex = this.activities.findIndex(a => a.id === id);
-        if (activityIndex !== -1 && this.activities[activityIndex].participantCount > 0) {
-          this.activities[activityIndex].participantCount--;
+        if (activityIndex !== -1) {
+          const activity = this.activities[activityIndex];
+          if (activity && activity.participantCount !== undefined && activity.participantCount > 0) {
+            activity.participantCount--;
+          }
         }
       } else {
         promptAction.showToast({
@@ -367,7 +377,7 @@ export struct ActivityPage {
                         .width(16)
                         .height(16)
                         .margin({ right: 8 })
-                      Text(`报名: ${activity.participantCount}/${activity.maxParticipants}`)
+                      Text(`报名: ${activity.participantCount || 0}/${activity.maxParticipants}`)
                         .fontSize(14)
                         .fontColor('#D32F2F')
                     }

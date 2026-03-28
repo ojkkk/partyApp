@@ -11,7 +11,7 @@ export interface Activity {
   organizer: string;
   imageUrl: string;
   status: 'upcoming' | 'ongoing' | 'completed';
-  participantCount: number;
+  participantCount?: number;
   maxParticipants: number;
   summary?: string;
   summaryImageUrl?: string;

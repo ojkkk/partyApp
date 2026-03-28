@@ -161,18 +161,17 @@ struct ActivityEditPage {
       let response: ApiResponse<Activity>;
       if (this.isEdit) {
         const updateData: Activity = {
-          id: this.activityId,
-          title: activityData.title,
-          content: activityData.content,
-          location: activityData.location,
-          organizer: activityData.organizer,
-          imageUrl: activityData.imageUrl || '',
-          startTime: this.formatDate(this.startDate),
-          endTime: this.formatDate(this.endDate),
-          maxParticipants: activityData.maxParticipants,
-          participantCount: 0,
-          status: 'upcoming' // 状态会自动计算，这里设置一个默认值
-        };
+        id: this.activityId,
+        title: activityData.title,
+        content: activityData.content,
+        location: activityData.location,
+        organizer: activityData.organizer,
+        imageUrl: activityData.imageUrl || '',
+        startTime: this.formatDate(this.startDate),
+        endTime: this.formatDate(this.endDate),
+        maxParticipants: activityData.maxParticipants,
+        status: 'upcoming' // 状态会自动计算，这里设置一个默认值
+      };
         response = await this.activityService.updateActivity(this.activityId, updateData);
       } else {
         response = await this.activityService.createActivity(activityData);
