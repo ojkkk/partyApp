@@ -109,6 +109,7 @@ export struct PasswordChangePage {
           .textAlign(TextAlign.Center)
         Blank()
           .width(24)
+
           .margin({right:0})
       }
       .width('100%')
