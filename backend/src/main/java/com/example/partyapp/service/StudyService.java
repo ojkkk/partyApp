@@ -118,11 +118,8 @@ public class StudyService {
                 .mapToInt(p -> p.getStudyDuration() != null ? p.getStudyDuration() / 60 : 0)
                 .sum();
         
-        double totalProgress = progresses.isEmpty() ? 0 : 
-            progresses.stream()
-                .mapToInt(p -> p.getProgress() != null ? p.getProgress() : 0)
-                .average()
-                .orElse(0);
+        // 按照已完成课程数/总课程数计算进度，保留整数
+        int totalProgress = totalCourses > 0 ? (completedCourses * 100 / totalCourses) : 0;
         
         return new StudyStats(totalCourses, completedCourses, totalDuration, totalProgress);
     }

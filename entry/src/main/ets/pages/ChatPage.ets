@@ -234,6 +234,34 @@ export struct ChatPage {
     return h + ':' + m;
   }
 
+  // 格式化日期显示，用于分割线
+  formatDate(timestamp: string): string {
+    if (!timestamp) return '';
+    const date: Date = new Date(timestamp);
+    const now: Date = new Date();
+    const year: number = date.getFullYear();
+    const month: number = date.getMonth() + 1;
+    const day: number = date.getDate();
+    
+    // 如果是当年，只显示月-日；否则显示年-月-日
+    if (year === now.getFullYear()) {
+      return `${month}月${day}日`;
+    } else {
+      return `${year}年${month}月${day}日`;
+    }
+  }
+
+  // 检查是否需要显示日期分割线
+  shouldShowDateDivider(currentMsg: Message, previousMsg?: Message): boolean {
+    if (!previousMsg) return true; // 第一条消息总是显示
+    
+    const currentDate: Date = new Date(currentMsg.createdAt);
+    const prevDate: Date = new Date(previousMsg.createdAt);
+    
+    // 检查是否是不同的日期
+    return currentDate.toDateString() !== prevDate.toDateString();
+  }
+
   // 只返回两种文字
   getStatusDisplay(status?: 'sent' | 'read'): string {
     if (status === 'read') return '已读';
@@ -313,12 +341,18 @@ export struct ChatPage {
   @Builder
   buildMsgList() {
     List({ scroller: this.listScroller }) {
-      ForEach(this.messages, (msg: Message) => {
+      ForEach(this.messages, (msg: Message, index: number) => {
         ListItem() {
-          if (msg.isSent) {
-            this.buildRightBubble(msg);
-          } else {
-            this.buildLeftBubble(msg);
+          Column() {
+            // 检查是否需要显示日期分割线
+            if (index === 0 || this.shouldShowDateDivider(msg, this.messages[index - 1])) {
+              this.buildDateDivider(msg.createdAt);
+            }
+            if (msg.isSent) {
+              this.buildRightBubble(msg);
+            } else {
+              this.buildLeftBubble(msg);
+            }
           }
         }
       }, (msg: Message) => msg.id);
@@ -328,6 +362,22 @@ export struct ChatPage {
     .padding({ top: 8, bottom: 8 }) // 🔧 这里的 bottom 可以保留，让最后一条消息不贴边
     .backgroundColor('#F5F5F5')
     .alignListItem(ListItemAlign.Start); // 确保列表项对齐
+  }
+
+  // 构建日期分割线
+  @Builder
+  buildDateDivider(timestamp: string) {
+    Row() {
+      Text(this.formatDate(timestamp))
+        .fontSize(12)
+        .fontColor('#999999')
+        .backgroundColor('#E0E0E0')
+        .padding({ left: 12, right: 12, top: 4, bottom: 4 })
+        .borderRadius(12);
+    }
+    .width('100%')
+    .justifyContent(FlexAlign.Center)
+    .padding({ top: 16, bottom: 8 });
   }
 
   @Builder

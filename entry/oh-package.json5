@@ -5,6 +5,9 @@
   "main": "",
   "author": "",
   "license": "",
-  "dependencies": {}
+  "dependencies": {
+    "@ohos/lottie": "^2.0.29"
+  },
+  "devDependencies": {},
+  "dynamicDependencies": {}
 }
-

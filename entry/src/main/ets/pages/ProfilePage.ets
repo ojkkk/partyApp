@@ -195,7 +195,7 @@ export struct ProfilePage {
   build(): void {
     Scroll() {
       Column() {
-        // 1. 顶部渐变头部
+        // 1. 顶部图片背景头部
         Column() {
           Stack() {
             if (this.user) {
@@ -237,7 +237,8 @@ export struct ProfilePage {
         }
         .width('100%')
         .padding({ top: 48, bottom: 32 })
-        .linearGradient({ angle: 135, colors: [['#C62828', 0], ['#E53935', 1]] })
+        .backgroundImage($rawfile('长城-粒子.jpg'))
+        .backgroundImageSize({ width: '100%', height: '100%' })
 
         // 2. 党费卡片
         Column() {

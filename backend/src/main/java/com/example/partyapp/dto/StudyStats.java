@@ -11,5 +11,5 @@ public class StudyStats {
     private Integer totalCourses;
     private Integer completedCourses;
     private Integer totalDuration;
-    private Double totalProgress;
+    private Integer totalProgress;
 }
