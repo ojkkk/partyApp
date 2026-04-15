@@ -2,6 +2,7 @@ package com.example.partyapp.controller;
 
 import com.example.partyapp.context.UserContext;
 import com.example.partyapp.dto.ApiResponse;
+import com.example.partyapp.dto.ChangePasswordRequest;
 import com.example.partyapp.entity.User;
 import com.example.partyapp.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -115,11 +116,10 @@ public class UserController {
 
     // 修改密码
     @PostMapping("/change-password")
-    public ApiResponse<Boolean> changePassword(@RequestParam("oldPassword") String oldPassword, 
-                                             @RequestParam("newPassword") String newPassword) {
+    public ApiResponse<Boolean> changePassword(@RequestBody ChangePasswordRequest request) {
         try {
             String userId = UserContext.getUserId();
-            boolean result = userService.changePassword(userId, oldPassword, newPassword);
+            boolean result = userService.changePassword(userId, request.getOldPassword(), request.getNewPassword());
             return ApiResponse.success(result);
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage());

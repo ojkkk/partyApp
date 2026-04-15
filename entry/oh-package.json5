@@ -6,7 +6,8 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "@ohos/lottie": "^2.0.29"
+
+    "@ohos/mpchart": "^3.0.0"
   },
   "devDependencies": {},
   "dynamicDependencies": {}

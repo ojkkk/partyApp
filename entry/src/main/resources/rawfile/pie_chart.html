@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html style="width:100%;height:100%;margin:0;padding:0;overflow:hidden;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pie Chart</title>
+  <style>
+    * { margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; }
+    canvas { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script>
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+    var data = { completed: 0, inProgress: 0, notStarted: 0 };
+
+    function resizeCanvas() {
+      canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+
+    function drawPie() {
+      var w = canvas.offsetWidth;
+      var h = canvas.offsetHeight;
+      var cx = w / 2;
+      var cy = h / 2;
+      var r = Math.min(cx, cy) * 0.85;
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      var total = data.completed + data.inProgress + data.notStarted;
+      if (total === 0) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#CCCCCC';
+        ctx.fill();
+        return;
+      }
+      
+      var startAngle = -Math.PI / 2;
+      var colors = ['#D83A34', '#B51F2E', '#CCCCCC'];
+      var values = [data.inProgress, data.completed, data.notStarted];
+      
+      for (var i = 0; i < 3; i++) {
+        if (values[i] <= 0) continue;
+        var sliceAngle = (values[i] / total) * Math.PI * 2;
+        var endAngle = startAngle + sliceAngle;
+        
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, startAngle, endAngle);
+        ctx.closePath();
+        ctx.fillStyle = colors[i];
+        ctx.fill();
+        
+        startAngle = endAngle;
+      }
+    }
+
+    function updateChart(completed, inProgress, notStarted) {
+      data.completed = completed;
+      data.inProgress = inProgress;
+      data.notStarted = notStarted;
+      drawPie();
+    }
+
+    window.onresize = function() {
+      resizeCanvas();
+      drawPie();
+    };
+
+    resizeCanvas();
+    drawPie();
+  </script>
+</body>
+</html>

@@ -18,7 +18,7 @@ export struct ChatPage {
   @State inputText: string = '';
   @State isLoading: boolean = false;
   @State showEmojiPanel: boolean = false;
-  @State isOnline: boolean = false; // 🔧 这个是真实的，通过接口轮询
+  @State isOnline: boolean = false;
   @State lastSeen: string = '';
   private userService: UserService = new UserService();
   private userId: string = '';
@@ -27,6 +27,18 @@ export struct ChatPage {
   private currentUserId: string = '';
   private statusUpdateInterval: number = -1;
   private listScroller: ListScroller = new ListScroller();
+
+  // ===================== 颜色配置 - 庄重红金正式风 =====================
+  private readonly COLOR_PRIMARY = '#B51F2E';      // 绛红
+  private readonly COLOR_PRIMARY_LIGHT = '#D83A34'; // 亮红
+  private readonly COLOR_GOLD = '#C9A45C';         // 暖金
+  private readonly COLOR_BG = '#F7F4EF';           // 米白背景
+  private readonly COLOR_CARD = '#FFFFFF';         // 卡片白
+  private readonly COLOR_TEXT_PRIMARY = '#1F1F1F'; // 主文字
+  private readonly COLOR_TEXT_SECONDARY = '#666666'; // 次要文字
+  private readonly COLOR_TEXT_TERTIARY = '#999999';  // 辅助文字
+  private readonly COLOR_DIVIDER = '#F0EBE3';      // 分割线
+
   private emojis: string[] = [
     '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂',
     '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩',
@@ -44,28 +56,8 @@ export struct ChatPage {
     '🖕', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛',
     '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✍️',
     '💅', '🤳', '💪', '🦾', '🦿', '🦵', '🦶', '👂',
-    '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼',
-    '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🙈',
-    '🙉', '🙊', '🐒', '🐔', '🐧', '🐦', '🐤', '🦆',
-    '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝',
-    '🐛', '🦋', '🐌', '🐞', '🐜', '🦟', '🦗', '🕷️',
-    '🍎', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🫐',
-    '🍈', '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅',
-    '🍆', '🥑', '🥦', '🥬', '🧄', '🧅', '🥔', '🍠',
-    '🌽', '🥕', '🫑', '🌶️', '🥒', '🍞', '🥐', '🥖',
-    '🥨', '🧀', '🥚', '🍳', '🧈', '🥓', '🥩', '🍗',
-    '🍖', '🌭', '🍔', '🍟', '🍕', '🥪', '🌮', '🌯',
-    '🧂', '🥫', '🍱', '🍘', '🍙', '🍚', '🍛', '🍜',
-    '🍝', '🍠', '🍢', '🍣', '🍤', '🍥', '🍡', '🥟',
-    '🍦', '🍧', '🍨', '🍩', '🍪', '🎂', '🍰', '🧁',
-    '🥧', '🍫', '🍬', '🍭', '🍮', '🍯', '🍼', '🥛',
-    '☕', '🫖', '🍵', '🍶', '🍷', '🍸', '🍹', '🍺',
-    '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍',
-    '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖',
-    '💘', '💝', '💟', '🔥', '✨', '⭐', '🌟', '💫',
-    '⚡', '☁️', '🌈', '☀️', '🌤️', '⛅', '🌥️', '☂️',
-    '🌧️', '⛈️', '🌩️', '🌨️', '❄️', '☃️', '⛄', '🌬️',
-    '💨', '🌪️', '🌫️', '🌊', '💧', '💦', '☔'
+    '❤️', '💕', '💞', '💓', '💗', '💖', '💘', '💝',
+    '🔥', '✨', '⭐', '🌟', '💫', '⚡', '☀️', '🌈'
   ];
 
   async aboutToAppear() {
@@ -77,9 +69,8 @@ export struct ChatPage {
       this.currentUserId = await StorageService.getItemAsync<string>('userId') || '';
 
       await this.loadMessages();
-      await this.loadUserStatus(); // 🔧 真实：进入页面立即查一次在线状态
+      await this.loadUserStatus();
 
-      // 🔧 真实：开启定时器，每30秒刷新一次在线状态
       this.statusUpdateInterval = setInterval(async () => {
         await this.loadUserStatus();
       }, 30000);
@@ -95,7 +86,6 @@ export struct ChatPage {
     }
   }
 
-  // 🔧 真实实现：通过接口获取对方在线状态
   async loadUserStatus(): Promise<void> {
     try {
       const response: ApiResponse<UserStatusData> = await this.userService.getUserStatus(this.userId);
@@ -115,10 +105,8 @@ export struct ChatPage {
   async loadMessages(): Promise<void> {
     this.isLoading = true;
     try {
-      // 先标记消息为已读
       await this.userService.markChatMessageAsRead(this.userId);
 
-      // 然后加载消息列表
       const response: ApiResponse<Message[]> = await this.userService.getMessages(this.userId);
       if (response.code === 200 && response.data) {
         const rawList: Message[] = response.data;
@@ -163,7 +151,6 @@ export struct ChatPage {
     if (!content) return;
 
     const tempId: string = 'temp_' + Date.now();
-    // 初始状态设为 sent
     const tempMsg: Message = {
       id: tempId,
       content: content,
@@ -184,13 +171,9 @@ export struct ChatPage {
     try {
       const response: ApiResponse<SendResultData> = await this.userService.sendMessage(this.userId, content);
       if (response.code === 200) {
-        // 🔧 真实逻辑 1：接口返回成功，代表【已发送】
         this.updateMsgStatus(tempId, 'sent');
 
-        // 🔧 真实逻辑 2：如果当前对方正好在线，我们认为消息【已读】
-        // (这是在没有长连接推送下的合理简化，真实IM需要WebSocket)
         if (this.isOnline) {
-          // 稍微延迟一点点，模拟网络传输和查看时间
           setTimeout(() => {
             this.updateMsgStatus(tempId, 'read');
           }, 1000);
@@ -204,7 +187,6 @@ export struct ChatPage {
     }
   }
 
-  // 简化参数类型
   updateMsgStatus(id: string, status: 'sent' | 'read'): void {
     const idx: number = this.findMsgIndexById(id);
     if (idx !== -1) {
@@ -234,7 +216,6 @@ export struct ChatPage {
     return h + ':' + m;
   }
 
-  // 格式化日期显示，用于分割线
   formatDate(timestamp: string): string {
     if (!timestamp) return '';
     const date: Date = new Date(timestamp);
@@ -242,8 +223,7 @@ export struct ChatPage {
     const year: number = date.getFullYear();
     const month: number = date.getMonth() + 1;
     const day: number = date.getDate();
-    
-    // 如果是当年，只显示月-日；否则显示年-月-日
+
     if (year === now.getFullYear()) {
       return `${month}月${day}日`;
     } else {
@@ -251,26 +231,23 @@ export struct ChatPage {
     }
   }
 
-  // 检查是否需要显示日期分割线
   shouldShowDateDivider(currentMsg: Message, previousMsg?: Message): boolean {
-    if (!previousMsg) return true; // 第一条消息总是显示
-    
+    if (!previousMsg) return true;
+
     const currentDate: Date = new Date(currentMsg.createdAt);
     const prevDate: Date = new Date(previousMsg.createdAt);
-    
-    // 检查是否是不同的日期
+
     return currentDate.toDateString() !== prevDate.toDateString();
   }
 
-  // 只返回两种文字
   getStatusDisplay(status?: 'sent' | 'read'): string {
     if (status === 'read') return '已读';
-    return '已发送'; // 已发送状态不显示文字，或者显示 '已发送'
+    return '已发送';
   }
 
   getStatusColor(status?: 'sent' | 'read'): ResourceColor {
-    if (status === 'read') return '#4CAF50';
-    return '#999999';
+    if (status === 'read') return this.COLOR_GOLD;
+    return this.COLOR_TEXT_TERTIARY;
   }
 
   build() {
@@ -282,60 +259,95 @@ export struct ChatPage {
         this.buildMsgList();
       }
 
-      // 🔧 关键修改：底部区域统一管理
       Column() {
-        // 如果显示表情，先渲染表情面板
         if (this.showEmojiPanel) {
           this.buildEmojiPanel();
         }
-        // 再渲染输入框
         this.buildInputBar();
       }
       .width('100%')
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F5F5F5');
+    .backgroundColor(this.COLOR_BG);
   }
 
   @Builder
   buildHeader() {
-    Row() {
-      Button('返回')
-        .backgroundColor(Color.Transparent)
-        .fontColor('#D32F2F')
-        .onClick(() => router.back());
+    Stack({ alignContent: Alignment.Bottom }) {
+      Row()
+        .width('100%')
+        .height('100%')
+        .linearGradient({
+          direction: GradientDirection.Right,
+          colors: [['#B51F2E', 0], ['#D83A34', 1]]
+        });
 
-      Column() {
-        Text(this.userName).fontSize(18).fontWeight(FontWeight.Bold);
-        // 🔧 这里显示的在线/离线是真实的，来自 loadUserStatus 接口
-        Text(this.isOnline ? '在线' : '离线')
-          .fontSize(12)
-          .fontColor(this.isOnline ? '#4CAF50' : '#999999');
+      Row() {
+        Row() {
+          Text('‹')
+            .fontSize(32)
+            .fontColor('#FFFFFF')
+            .fontWeight(FontWeight.Regular)
+            .margin({ bottom: 6 })
+            .onClick(() => router.back());
+        }
+        .width(56)
+        .height('100%')
+        .justifyContent(FlexAlign.Center);
+
+        Column() {
+          Text(this.userName)
+            .fontSize(17)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#FFFFFF');
+
+          Row() {
+            Row()
+              .width(6)
+              .height(6)
+              .backgroundColor(this.isOnline ? '#4CAF50' : this.COLOR_TEXT_TERTIARY)
+              .borderRadius(3)
+              .margin({ right: 4 });
+
+            Text(this.isOnline ? '在线' : '离线')
+              .fontSize(11)
+              .fontColor('rgba(255,255,255,0.8)');
+          }
+          .margin({ top: 2 });
+        }
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Center);
+
+        Row()
+          .width(56)
+          .height('100%');
       }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Center);
+      .width('100%')
+      .height(56)
+      .padding({ top: 8 });
 
-      Button('更多')
-        .backgroundColor(Color.Transparent)
-        .fontColor('#666666')
-        .onClick(() => promptAction.showToast({ message: '开发中' }));
+      Row()
+        .width('100%')
+        .height(1)
+        .backgroundColor('rgba(201, 164, 92, 0.4)');
     }
     .width('100%')
-    .height(56)
-    .padding({ left: 8, right: 8 })
-    .backgroundColor('#FFFFFF')
-    .shadow({ radius: 2, color: '#00000010', offsetY: 2 });
+    .height(56);
   }
 
   @Builder
   buildLoading() {
     Column() {
-      LoadingProgress().width(40).height(40);
+      LoadingProgress()
+        .width(40)
+        .height(40)
+        .color(this.COLOR_PRIMARY);
     }
     .width('100%')
     .layoutWeight(1)
-    .justifyContent(FlexAlign.Center);
+    .justifyContent(FlexAlign.Center)
+    .backgroundColor(this.COLOR_BG);
   }
 
   @Builder
@@ -344,7 +356,6 @@ export struct ChatPage {
       ForEach(this.messages, (msg: Message, index: number) => {
         ListItem() {
           Column() {
-            // 检查是否需要显示日期分割线
             if (index === 0 || this.shouldShowDateDivider(msg, this.messages[index - 1])) {
               this.buildDateDivider(msg.createdAt);
             }
@@ -358,22 +369,21 @@ export struct ChatPage {
       }, (msg: Message) => msg.id);
     }
     .width('100%')
-    .layoutWeight(1) // 占据剩余空间
-    .padding({ top: 8, bottom: 8 }) // 🔧 这里的 bottom 可以保留，让最后一条消息不贴边
-    .backgroundColor('#F5F5F5')
-    .alignListItem(ListItemAlign.Start); // 确保列表项对齐
+    .layoutWeight(1)
+    .padding({ top: 8, bottom: 8 })
+    .backgroundColor(this.COLOR_BG)
+    .alignListItem(ListItemAlign.Start);
   }
 
-  // 构建日期分割线
   @Builder
   buildDateDivider(timestamp: string) {
     Row() {
       Text(this.formatDate(timestamp))
-        .fontSize(12)
-        .fontColor('#999999')
-        .backgroundColor('#E0E0E0')
+        .fontSize(11)
+        .fontColor(this.COLOR_TEXT_TERTIARY)
+        .backgroundColor('rgba(0,0,0,0.05)')
         .padding({ left: 12, right: 12, top: 4, bottom: 4 })
-        .borderRadius(12);
+        .borderRadius(10);
     }
     .width('100%')
     .justifyContent(FlexAlign.Center)
@@ -390,31 +400,36 @@ export struct ChatPage {
         },
         avatarSize: 40
       })
-        .margin({ right: 12, left: 16 });
+        .margin({ right: 10, left: 12 })
+        .alignSelf(ItemAlign.Start);
 
       Column() {
         Text(msg.content)
-          .fontSize(16)
+          .fontSize(15)
+          .fontColor(this.COLOR_TEXT_PRIMARY)
           .padding(12)
-          .backgroundColor('#FFFFFF')
+          .backgroundColor(this.COLOR_CARD)
           .borderRadius({
-            topLeft: 0,
+            topLeft: 4,
             topRight: 16,
             bottomLeft: 16,
             bottomRight: 16
           })
-          .constraintSize({ maxWidth: '70%' });
+          .shadow({ radius: 4, color: '#00000008', offsetX: 0, offsetY: 1 })
+          .constraintSize({ maxWidth: '68%' });
 
         Text(this.formatTime(msg.createdAt))
-          .fontSize(10).fontColor('#999999')
-          .margin({ top: 4 });
+          .fontSize(10)
+          .fontColor(this.COLOR_TEXT_TERTIARY)
+          .margin({ top: 4, left: 4 });
       }
-      .alignItems(HorizontalAlign.Start);
+      .alignItems(HorizontalAlign.Start)
+      .alignSelf(ItemAlign.Start);
 
       Blank();
     }
     .width('100%')
-    .padding({ top: 4, bottom: 4 });
+    .padding({ top: 6, bottom: 6 });
   }
 
   @Builder
@@ -423,58 +438,60 @@ export struct ChatPage {
       Blank();
 
       Column() {
-        Row() {
-          Column() {
-            // 🔧 只有已读时才显示文字
-            Text(this.getStatusDisplay(msg.status))
-              .fontSize(12)
-              .fontColor(this.getStatusColor(msg.status))
-              .margin({ right: 4 });
-            Text(this.formatTime(msg.createdAt))
-              .fontSize(10).fontColor('#999999');
-          }
-          .alignItems(HorizontalAlign.End)
-          .margin({ right: 6 });
+        // 消息气泡
+        Text(msg.content)
+          .fontSize(15)
+          .padding(12)
+          .backgroundColor(this.COLOR_PRIMARY)
+          .fontColor('#FFFFFF')
+          .borderRadius({
+            topLeft: 16,
+            topRight: 4,
+            bottomLeft: 16,
+            bottomRight: 16
+          })
+          .constraintSize({ maxWidth: '68%' });
 
-          Text(msg.content)
-            .fontSize(16)
-            .padding(12)
-            .backgroundColor('#D32F2F')
-            .fontColor('#FFFFFF')
-            .borderRadius({
-              topLeft: 16,
-              topRight: 0,
-              bottomLeft: 16,
-              bottomRight: 16
-            })
-            .constraintSize({ maxWidth: '70%' });
+        // 时间和状态 - 放在气泡下方
+        Row() {
+          Text(this.formatTime(msg.createdAt))
+            .fontSize(10)
+            .fontColor(this.COLOR_TEXT_TERTIARY);
+
+          if (msg.status === 'read') {
+            Text(' · ' + this.getStatusDisplay(msg.status))
+              .fontSize(10)
+              .fontColor(this.getStatusColor(msg.status));
+          }
         }
-        .alignItems(VerticalAlign.Bottom);
+        .margin({ top: 4, right: 4 });
       }
-      .alignItems(HorizontalAlign.End);
+      .alignItems(HorizontalAlign.End)
+      .alignSelf(ItemAlign.Start);
 
       Text('我')
         .width(40)
         .height(40)
         .borderRadius(20)
-        .backgroundColor('#999999')
+        .backgroundColor(this.COLOR_PRIMARY)
         .fontColor('#FFFFFF')
+        .fontSize(14)
+        .fontWeight(FontWeight.Medium)
         .textAlign(TextAlign.Center)
-        .margin({ left: 12, right: 16 });
+        .margin({ left: 10, right: 12 });
     }
     .width('100%')
-    .padding({ top: 4, bottom: 4 });
+    .padding({ top: 6, bottom: 6 });
   }
 
   @Builder
   buildEmojiPanel() {
     Column() {
-      // 🔧 修复：去掉不存在的 scrollEdge 属性
       Scroll() {
         Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.SpaceAround }) {
           ForEach(this.emojis, (emoji: string) => {
             Text(emoji)
-              .fontSize(28)
+              .fontSize(26)
               .width('12.5%')
               .height(44)
               .textAlign(TextAlign.Center)
@@ -487,13 +504,13 @@ export struct ChatPage {
         .padding({ left: 12, right: 12, top: 8, bottom: 8 })
       }
       .width('100%')
-      .height(260)
-      .scrollBar(BarState.Auto) // 保留这个，显示滚动条
-      .backgroundColor('#FFFFFF');
+      .height(240)
+      .scrollBar(BarState.Auto)
+      .backgroundColor(this.COLOR_CARD);
 
       Divider()
-        .color('#E0E0E0')
-        .strokeWidth(0.5)
+        .color(this.COLOR_DIVIDER)
+        .strokeWidth(0.5);
     }
     .width('100%');
   }
@@ -502,47 +519,45 @@ export struct ChatPage {
   buildInputBar() {
     Row() {
       Button('😀')
-        .fontSize(20)
+        .fontSize(18)
         .backgroundColor(Color.Transparent)
-        .width(60)
-        .height(60)
+        .width(44)
+        .height(44)
+        .padding(0)
         .onClick(() => {
           this.showEmojiPanel = !this.showEmojiPanel;
         });
 
       TextInput({ placeholder: '输入消息...', text: this.inputText })
+        .placeholderColor(this.COLOR_TEXT_TERTIARY)
         .layoutWeight(1)
         .height(40)
-        .backgroundColor('#F0F0F0')
+        .backgroundColor('#F5F5F5')
         .borderRadius(20)
         .padding({ left: 16, right: 16 })
         .onChange((val: string) => {
           this.inputText = val;
         })
         .onFocus(() => {
-          // 聚焦输入框时关闭表情
           this.showEmojiPanel = false;
         });
 
       Button('发送')
         .width(64)
-        .height(40)
-        .margin({ left: 12 })
-        .backgroundColor(this.inputText.trim() ? '#D32F2F' : '#CCCCCC')
+        .height(36)
+        .margin({ left: 8 })
+        .backgroundColor(this.inputText.trim() ? this.COLOR_PRIMARY : '#CCCCCC')
         .fontColor('#FFFFFF')
-        .borderRadius(20)
+        .fontSize(14)
+        .fontWeight(FontWeight.Medium)
+        .borderRadius(18)
         .enabled(this.inputText.trim().length > 0)
         .onClick(() => {
           this.sendMessage();
         });
     }
     .width('100%')
-    .padding({
-      left: 12,
-      right: 12,
-      top: 8,
-      bottom: 8
-    })
-    .backgroundColor('#FFFFFF');
+    .padding({ left: 8, right: 12, top: 8, bottom: 8 })
+    .backgroundColor(this.COLOR_CARD);
   }
 }

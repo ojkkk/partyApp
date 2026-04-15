@@ -9,6 +9,9 @@ export interface Policy {
   publishDate: string;
   imageUrl: string;
   videoUrl?: string;
+  summary?: string;
+  tags?: string;
+  publisher?: string;
   viewCount?: number;
   createdBy?: string;
   createdAt?: string;

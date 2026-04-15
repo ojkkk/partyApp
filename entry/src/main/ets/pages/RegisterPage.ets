@@ -220,7 +220,7 @@ struct RegisterPage {
     Stack() {
       // 红旗装饰层
 
-      
+
       // 底部长城-红背景
       Image($rawfile('长城-红.png'))
         .width('100%')

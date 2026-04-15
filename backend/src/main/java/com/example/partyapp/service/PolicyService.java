@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -42,8 +43,36 @@ public class PolicyService {
         return policy;
     }
 
+private static final String[] SUMMARIES = {
+        "深入贯彻落实中央决策部署，全面推进各项任务落地见效。",
+        "着力加强制度建设和工作创新，确保各项工作取得实效。",
+        "坚持问题导向，强化责任担当，推动高质量发展迈上新台阶。",
+        "统筹推进重点任务落实，促进各项事业协同发展。",
+        "坚持党的全面领导，提升治理效能，服务人民群众。"
+    };
+
+    private static final String[] TAGS = {
+        "重要文件,需贯彻落实",
+        "工作部署,全面推进",
+        "制度建设,规范化管理",
+        "创新发展,高质量发展",
+        "责任落实,监督考核",
+        "党的建设,政治建设",
+        "改革攻坚,重点突破",
+        "民生保障,服务群众"
+    };
+
     public Policy createPolicy(Policy policy) {
         policy.setViewCount(0);
+        // publisher 由前端传入，admin 写稿时可不填（显示为空或"待定"）
+        Random rand = new Random();
+        // 已有 summary/tag 则保留，否则随机分配
+        if (policy.getSummary() == null || policy.getSummary().isBlank()) {
+            policy.setSummary(SUMMARIES[rand.nextInt(SUMMARIES.length)]);
+        }
+        if (policy.getTags() == null || policy.getTags().isBlank()) {
+            policy.setTags(TAGS[rand.nextInt(TAGS.length)]);
+        }
         policyMapper.insert(policy);
         return policy;
     }

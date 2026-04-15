@@ -23,6 +23,12 @@ public class Policy {
 
     private String videoUrl;
 
+    private String summary;
+
+    private String tags;
+
+    private String publisher;
+
     private Integer viewCount;
 
     private String createdBy;

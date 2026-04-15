@@ -3,18 +3,10 @@ import { StorageService } from '../services/StorageService';
 import promptAction from '@ohos.promptAction';
 import router from '@ohos.router';
 import { emitter } from '@kit.BasicServicesKit';
-// 修复1：重新定义显式接口
+
 interface SelectOption {
   value: string;
 }
-
-// 标准党旗红主色，符合党建应用规范
-const PRIMARY_COLOR: string = '#C8102E';
-const BG_COLOR: string = '#F5F7FA';
-const CARD_BG: string = '#FFFFFF';
-const TEXT_MAIN: string = '#181818';
-const TEXT_SECOND: string = '#666666';
-const TEXT_GRAY: string = '#999999';
 
 @Entry
 @Component
@@ -28,6 +20,17 @@ export struct BranchManagementPage {
   @State unreadCount: number = 0;
   @State isLoading: boolean = false;
 
+  // ===================== 颜色配置 - 庄重红金正式风 =====================
+  private readonly COLOR_PRIMARY = '#B51F2E';
+  private readonly COLOR_PRIMARY_LIGHT = '#D83A34';
+  private readonly COLOR_GOLD = '#C9A45C';
+  private readonly COLOR_BG = '#F7F4EF';
+  private readonly COLOR_CARD = '#FFFFFF';
+  private readonly COLOR_TEXT_PRIMARY = '#1F1F1F';
+  private readonly COLOR_TEXT_SECONDARY = '#666666';
+  private readonly COLOR_TEXT_TERTIARY = '#999999';
+  private readonly COLOR_DIVIDER = '#F0EBE3';
+
   private userService: UserService = new UserService();
 
   async aboutToAppear() {
@@ -35,7 +38,6 @@ export struct BranchManagementPage {
     await this.loadBranches();
     await this.loadUnreadCount();
     await this.loadUserMessages();
-    // 标记所有未读消息为已读
     await this.markAllMessagesAsRead();
     if (this.user?.role === 'branch_admin') {
       await this.loadPendingApplications();
@@ -48,7 +50,6 @@ export struct BranchManagementPage {
       for (const message of messages) {
         await this.userService.markBranchMessageAsRead(message.id);
       }
-      // 重新加载消息列表以更新状态
       await this.loadUserMessages();
     } catch (error) {
       console.error('标记消息为已读失败:', error);
@@ -79,7 +80,6 @@ export struct BranchManagementPage {
       const response = await this.userService.getPendingApplications();
       if (response.code === 200 && response.data) {
         this.applications = response.data;
-        // 获取每个申请人的信息
         await this.loadApplicantInfo();
       }
     } catch (error) {
@@ -120,7 +120,7 @@ export struct BranchManagementPage {
     try {
       const response = await this.userService.getUserMessages();
       if (response.code === 200 && response.data) {
-        this.messages = response.data.slice(0, 3); // 只显示最近三条
+        this.messages = response.data.slice(0, 3);
       }
     } catch (error) {
       console.error('加载消息列表失败:', error);
@@ -189,265 +189,350 @@ export struct BranchManagementPage {
 
   build() {
     Column() {
-      // 顶部导航栏
-      Row() {
-        Button() {
-          Image($rawfile("返回.png"))
-            .width(24)
-            .height(24)
-        }
-        .width(44)
-        .height(44)
-        .backgroundColor('transparent')
-        .onClick((): void =>{
-          router.back();
-          emitter.emit("refreshBranchUnread", null);
-        } )
+      this.buildHeader();
 
-        Text('支部管理')
-          .fontSize(20)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(TEXT_MAIN)
-          .layoutWeight(1)
-          .textAlign(TextAlign.Center)
-
-        Blank()
-          .width(44)
-          .height(44)
-      }
-      .width('100%')
-      .height(56)
-      .alignItems(VerticalAlign.Center)
-      .backgroundColor(CARD_BG)
-      .shadow({
-        radius: 4,
-        color: '#0A000000',
-        offsetX: 0,
-        offsetY: 1
-      })
-
-      // 内容区域
       Scroll() {
         Column() {
-          // 显示最近三条审批消息
           if (this.messages.length > 0) {
-            Text('审批消息')
-              .fontSize(16)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(TEXT_MAIN)
-              .margin({ top: 20, left: 0, bottom: 12 })
-
-            ForEach(this.messages, (message: BranchApplicationMessage): void => {
-              Column() {
-                Text(message.content)
-                  .fontSize(14)
-                  .fontColor(TEXT_MAIN)
-                  .width('100%')
-                  .margin({ bottom: 4 })
-                Text(message.createdAt.replace('T', ' '))
-                  .fontSize(12)
-                  .fontColor(TEXT_GRAY)
-              }
-              .width('100%')
-              .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-              .backgroundColor(CARD_BG)
-              .borderRadius(12)
-              .margin({ left: 16, right: 16, bottom: 8 })
-            })
+            this.buildMessagesSection();
           }
 
           if (this.isMember()) {
-            if (!this.user?.branch || this.user.branch.trim() === '') {
-              // 普通党员没有支部 - 申请加入支部
-              Text('申请加入支部')
-                .fontSize(18)
-                .fontWeight(FontWeight.Bold)
-                .fontColor(TEXT_MAIN)
-                .margin({ top: 20, left: 16, bottom: 20 })
-
-              Column() {
-                Text('选择支部')
-                  .fontSize(16)
-                  .fontColor(TEXT_MAIN)
-                  .width('100%')
-                  .margin({ bottom: 10 })
-
-                // 使用显式类型的SelectOption
-                Select(this.branches.map((branch: Branch): SelectOption => {
-                  return { value: branch.name };
-                }))
-                  .selected(this.branches.findIndex(b => b.id === this.selectedBranchId))
-                  .value(this.getSelectedBranchName() || '请选择支部')
-                  .width('100%')
-                  .height(48)
-                  .backgroundColor('#F5F7FA')
-                  .borderRadius(8)
-                  .font({ size: 16 })
-                  .onSelect((index: number, value: string): void => {
-                    if (index >= 0 && index < this.branches.length) {
-                      this.selectedBranchId = this.branches[index].id;
-                    }
-                  })
-              }
-              .width('100%')
-              .padding({ left: 16, right: 16, top: 16, bottom: 16 })
-              .backgroundColor(CARD_BG)
-              .borderRadius(12)
-              .margin({ left: 16, right: 16, bottom: 20 })
-
-              Button('提交申请')
-                .width('100%')
-                .height(48)
-                .fontSize(16)
-                .fontColor('#FFFFFF')
-                .backgroundColor(PRIMARY_COLOR)
-                .borderRadius(24)
-                .margin({ left: 16, right: 16, bottom: 20 })
-                .enabled(!this.isLoading)
-                .onClick(() => {
-                  void this.applyForBranch();
-                })
-            } else {
-              // 普通党员已有支部 - 显示当前所属支部
-              Text('当前所属支部')
-                .fontSize(18)
-                .fontWeight(FontWeight.Bold)
-                .fontColor(TEXT_MAIN)
-                .margin({ top: 20, left: 0, bottom: 20 })
-
-              Column() {
-                Text('支部名称')
-                  .fontSize(16)
-                  .fontColor(TEXT_SECOND)
-                  .width('100%')
-                  .margin({ bottom: 10 })
-                Text(this.user.branch)
-                  .fontSize(18)
-                  .fontWeight(FontWeight.Medium)
-                  .fontColor(TEXT_MAIN)
-                  .width('100%')
-              }
-              .width('100%')
-              .padding({ left: 16, right: 16, top: 20, bottom: 20 })
-              .backgroundColor(CARD_BG)
-              .borderRadius(12)
-              .margin({ left: 16, right: 16, bottom: 20 })
-            }
+            this.buildMemberView();
           } else if (this.isBranchAdmin()) {
-            // 支部管理员页面 - 审批申请
-            Text('支部申请审批')
-              .fontSize(18)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(TEXT_MAIN)
-              .margin({ top: 20, left: 16, bottom: 20 })
-
-            if (this.isLoading) {
-              LoadingProgress()
-                .width(40)
-                .height(40)
-                .color(PRIMARY_COLOR)
-                .margin({ top: 40 })
-            } else if (this.applications.length === 0) {
-              Column() {
-                Text('📋')
-                  .fontSize(48)
-                  .margin({ bottom: 16 })
-                Text('暂无审批消息提醒')
-                  .fontSize(16)
-                  .fontColor(TEXT_SECOND)
-              }
-              .width('100%')
-              .padding({ top: 60 })
-            } else {
-              ForEach(this.applications, (application: BranchApplication): void => {
-                Column() {
-                  Row() {
-                    Column() {
-                      Text(`申请人: ${this.userMap[application.userId]?.name || '未知'}`)
-                        .fontSize(14)
-                        .fontColor(TEXT_MAIN)
-                        .fontWeight(FontWeight.Medium)
-                      Text(`支部: ${this.getBranchName(application.branchId)}`)
-                        .fontSize(14)
-                        .fontColor(TEXT_SECOND)
-                        .margin({ top: 4 })
-                      Text(`申请日期: ${application.applyDate}`)
-                        .fontSize(12)
-                        .fontColor(TEXT_GRAY)
-                        .margin({ top: 4 })
-                    }
-                    .layoutWeight(1)
-                    .alignItems(HorizontalAlign.Start)
-
-                    Row() {
-                      Button('拒绝')
-                        .width(80)
-                        .height(36)
-                        .fontSize(14)
-                        .fontColor(TEXT_MAIN)
-                        .backgroundColor('#F5F7FA')
-                        .borderRadius(18)
-                        .enabled(!this.isLoading)
-                        .margin({ right: 10 })
-                        .onClick(() => {
-                          void this.approveApplication(application.id, false);
-                        })
-
-                      Button('通过')
-                        .width(80)
-                        .height(36)
-                        .fontSize(14)
-                        .fontColor('#FFFFFF')
-                        .backgroundColor(PRIMARY_COLOR)
-                        .borderRadius(18)
-                        .enabled(!this.isLoading)
-                        .onClick(() => {
-                          void this.approveApplication(application.id, true);
-                        })
-                    }
-                  }
-                  .width('100%')
-                  .padding(16)
-                }
-                .width('100%')
-                .margin({ left: 16, right: 16, bottom: 12 })
-                .backgroundColor(CARD_BG)
-                .borderRadius(12)
-                .shadow({
-                  radius: 4,
-                  color: '#0D000000',
-                  offsetX: 0,
-                  offsetY: 2
-                })
-              })
-            }
+            this.buildAdminView();
           }
 
-          if (this.isLoading) {
+          if (this.isLoading && this.applications.length === 0 && this.messages.length === 0) {
             LoadingProgress()
               .width(40)
               .height(40)
-              .color(PRIMARY_COLOR)
-              .margin({ top: 20 })
+              .color(this.COLOR_PRIMARY)
+              .margin({ top: 40 });
           }
         }
-        .padding({ bottom: 40 })
+        .padding({ bottom: 40 });
       }
       .layoutWeight(1)
       .scrollBar(BarState.Off)
-      .backgroundColor(BG_COLOR)
-      .align(Alignment.TopStart)
+      .backgroundColor(this.COLOR_BG)
+      .align(Alignment.TopStart);
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(BG_COLOR)
+    .backgroundColor(this.COLOR_BG);
+  }
+
+  @Builder
+  buildHeader() {
+    Stack({ alignContent: Alignment.Bottom }) {
+      Row()
+        .width('100%')
+        .height('100%')
+        .linearGradient({
+          direction: GradientDirection.Right,
+          colors: [['#B51F2E', 0], ['#D83A34', 1]]
+        });
+
+      Row() {
+        Row() {
+          Text('‹')
+            .fontSize(32)
+            .fontColor('#FFFFFF')
+            .fontWeight(FontWeight.Regular)
+            .margin({ bottom: 6 })
+            .onClick(() => {
+              router.back();
+              emitter.emit("refreshBranchUnread", null);
+            });
+        }
+        .width(56)
+        .height('100%')
+        .justifyContent(FlexAlign.Center);
+
+        Text('支部管理')
+          .fontSize(18)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#FFFFFF')
+          .layoutWeight(1)
+          .textAlign(TextAlign.Center);
+
+        Row()
+          .width(56)
+          .height('100%');
+      }
+      .width('100%')
+      .height(56)
+      .padding({ top: 8 });
+
+      Row()
+        .width('100%')
+        .height(1)
+        .backgroundColor('rgba(201, 164, 92, 0.4)');
+    }
+    .width('100%')
+    .height(56);
+  }
+
+  @Builder
+  buildMessagesSection() {
+    Column() {
+      Row() {
+        Row()
+          .width(3)
+          .height(14)
+          .backgroundColor(this.COLOR_PRIMARY)
+          .borderRadius(2)
+          .margin({ right: 8 });
+
+        Text('审批消息')
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.COLOR_TEXT_PRIMARY);
+      }
+      .width('100%')
+      .margin({ bottom: 12 });
+
+      ForEach(this.messages, (message: BranchApplicationMessage): void => {
+        Column() {
+          Text(message.content)
+            .fontSize(14)
+            .fontColor(this.COLOR_TEXT_PRIMARY)
+            .width('100%')
+            .margin({ bottom: 4 });
+          Text(message.createdAt.replace('T', ' '))
+            .fontSize(12)
+            .fontColor(this.COLOR_TEXT_TERTIARY);
+        }
+        .width('100%')
+        .padding(16)
+        .backgroundColor(this.COLOR_CARD)
+        .borderRadius(12)
+        .margin({ bottom: 8 })
+        .shadow({ radius: 4, color: '#00000006', offsetX: 0, offsetY: 1 });
+      });
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: 16 });
+  }
+
+  @Builder
+  buildMemberView() {
+    if (!this.user?.branch || this.user.branch.trim() === '') {
+      Column() {
+        Row() {
+          Row()
+            .width(3)
+            .height(14)
+            .backgroundColor(this.COLOR_PRIMARY)
+            .borderRadius(2)
+            .margin({ right: 8 });
+
+          Text('申请加入支部')
+            .fontSize(15)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(this.COLOR_TEXT_PRIMARY);
+        }
+        .width('100%')
+        .margin({ bottom: 16 });
+
+        Column() {
+          Text('选择支部')
+            .fontSize(14)
+            .fontColor(this.COLOR_TEXT_SECONDARY)
+            .width('100%')
+            .margin({ bottom: 10 });
+
+          Select(this.branches.map((branch: Branch): SelectOption => {
+            return { value: branch.name };
+          }))
+            .selected(this.branches.findIndex(b => b.id === this.selectedBranchId))
+            .value(this.getSelectedBranchName() || '请选择支部')
+            .width('100%')
+            .height(48)
+            .backgroundColor(this.COLOR_BG)
+            .borderRadius(8)
+            .font({ size: 16 })
+            .onSelect((index: number, value: string): void => {
+              if (index >= 0 && index < this.branches.length) {
+                this.selectedBranchId = this.branches[index].id;
+              }
+            });
+        }
+        .width('100%')
+        .padding(16)
+        .backgroundColor(this.COLOR_CARD)
+        .borderRadius(12)
+        .margin({ bottom: 20 })
+        .shadow({ radius: 4, color: '#00000006', offsetX: 0, offsetY: 1 });
+
+        Button('提交申请')
+          .width('100%')
+          .height(48)
+          .fontSize(16)
+          .fontColor('#FFFFFF')
+          .backgroundColor(this.COLOR_PRIMARY)
+          .borderRadius(24)
+          .enabled(!this.isLoading)
+          .onClick(() => {
+            void this.applyForBranch();
+          });
+      }
+      .width('100%')
+      .padding({ left: 16, right: 16, top: 16 });
+    } else {
+      Column() {
+        Row() {
+          Row()
+            .width(3)
+            .height(14)
+            .backgroundColor(this.COLOR_PRIMARY)
+            .borderRadius(2)
+            .margin({ right: 8 });
+
+          Text('当前所属支部')
+            .fontSize(15)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(this.COLOR_TEXT_PRIMARY);
+        }
+        .width('100%')
+        .margin({ bottom: 16 });
+
+        Column() {
+          Text('支部名称')
+            .fontSize(14)
+            .fontColor(this.COLOR_TEXT_SECONDARY)
+            .width('100%')
+            .margin({ bottom: 10 });
+          Text(this.user.branch)
+            .fontSize(18)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(this.COLOR_TEXT_PRIMARY)
+            .width('100%');
+        }
+        .width('100%')
+        .padding(20)
+        .backgroundColor(this.COLOR_CARD)
+        .borderRadius(12)
+        .border({ width: 1, color: this.COLOR_GOLD })
+        .shadow({ radius: 4, color: '#00000006', offsetX: 0, offsetY: 1 });
+      }
+      .width('100%')
+      .padding({ left: 16, right: 16, top: 16 });
+    }
+  }
+
+  @Builder
+  buildAdminView() {
+    Column() {
+      Row() {
+        Row()
+          .width(3)
+          .height(14)
+          .backgroundColor(this.COLOR_PRIMARY)
+          .borderRadius(2)
+          .margin({ right: 8 });
+
+        Text('支部申请审批')
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.COLOR_TEXT_PRIMARY);
+      }
+      .width('100%')
+      .margin({ bottom: 16 });
+
+      if (this.isLoading && this.applications.length === 0) {
+        LoadingProgress()
+          .width(40)
+          .height(40)
+          .color(this.COLOR_PRIMARY)
+          .margin({ top: 40 });
+      } else if (this.applications.length === 0) {
+        Column() {
+          Column() {
+            Text('📋')
+              .fontSize(40)
+              .fontColor(this.COLOR_GOLD)
+              .margin({ bottom: 12 });
+          }
+          .width(72)
+          .height(72)
+          .border({ width: 2, color: this.COLOR_GOLD })
+          .borderRadius(36)
+          .justifyContent(FlexAlign.Center)
+          .margin({ bottom: 16 });
+
+          Text('暂无审批消息提醒')
+            .fontSize(14)
+            .fontColor(this.COLOR_TEXT_TERTIARY);
+        }
+        .width('100%')
+        .padding({ top: 60 });
+      } else {
+        ForEach(this.applications, (application: BranchApplication): void => {
+          Column() {
+            Row() {
+              Column() {
+                Text(`申请人: ${this.userMap[application.userId]?.name || '未知'}`)
+                  .fontSize(14)
+                  .fontColor(this.COLOR_TEXT_PRIMARY)
+                  .fontWeight(FontWeight.Medium);
+                Text(`支部: ${this.getBranchName(application.branchId)}`)
+                  .fontSize(14)
+                  .fontColor(this.COLOR_TEXT_SECONDARY)
+                  .margin({ top: 4 });
+                Text(`申请日期: ${application.applyDate}`)
+                  .fontSize(12)
+                  .fontColor(this.COLOR_TEXT_TERTIARY)
+                  .margin({ top: 4 });
+              }
+              .layoutWeight(1)
+              .alignItems(HorizontalAlign.Start);
+
+              Row() {
+                Button('拒绝')
+                  .width(72)
+                  .height(36)
+                  .fontSize(13)
+                  .fontColor(this.COLOR_TEXT_SECONDARY)
+                  .backgroundColor(this.COLOR_BG)
+                  .borderRadius(18)
+                  .enabled(!this.isLoading)
+                  .margin({ right: 10 })
+                  .onClick(() => {
+                    void this.approveApplication(application.id, false);
+                  });
+
+                Button('通过')
+                  .width(72)
+                  .height(36)
+                  .fontSize(13)
+                  .fontColor('#FFFFFF')
+                  .backgroundColor(this.COLOR_PRIMARY)
+                  .borderRadius(18)
+                  .enabled(!this.isLoading)
+                  .onClick(() => {
+                    void this.approveApplication(application.id, true);
+                  });
+              }
+            }
+            .width('100%')
+            .padding(16);
+          }
+          .width('100%')
+          .margin({ bottom: 12 })
+          .backgroundColor(this.COLOR_CARD)
+          .borderRadius(12)
+          .shadow({ radius: 4, color: '#00000006', offsetX: 0, offsetY: 1 });
+        });
+      }
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: 16 });
   }
 
   async aboutToDisappear() {
-    // 通知首页更新未读消息数
     try {
-
-
       emitter.emit("refreshBranchUnread", null);
     } catch (error) {
       console.error('发送事件失败:', error);

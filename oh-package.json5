@@ -3,7 +3,7 @@
   "description": "Please describe the basic information.",
   "dependencies": {
     "pinyin-pro": "^3.26.0",
-
+    "@ohos/lottie": "^2.0.29",
 
   },
   "devDependencies": {

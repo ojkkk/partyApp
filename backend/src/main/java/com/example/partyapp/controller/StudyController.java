@@ -4,6 +4,7 @@ import com.example.partyapp.annotation.RequireRole;
 import com.example.partyapp.context.UserContext;
 import com.example.partyapp.dto.ApiResponse;
 import com.example.partyapp.dto.StudyStats;
+import com.example.partyapp.dto.StudyTopicDTO;
 import com.example.partyapp.entity.StudyResource;
 import com.example.partyapp.enums.Role;
 import com.example.partyapp.service.StudyService;
@@ -32,6 +33,56 @@ public class StudyController {
         }
         return ApiResponse.success(resource);
     }
+
+    // ===== 专题目录 API =====
+
+    /**
+     * 获取专题目录嵌套列表（专题 + 子资源）
+     */
+    @GetMapping("/topics")
+    public ApiResponse<List<StudyTopicDTO>> getTopics() {
+        return ApiResponse.success(studyService.getTopicsWithChildren());
+    }
+
+    /**
+     * 获取某专题下的子资源
+     */
+    @GetMapping("/topics/{topicId}/children")
+    public ApiResponse<List<StudyResource>> getTopicChildren(@PathVariable String topicId) {
+        return ApiResponse.success(studyService.getTopicChildren(topicId));
+    }
+
+    /**
+     * 创建专题目录
+     */
+    @PostMapping("/topics")
+    @RequireRole({Role.ADMIN, Role.BRANCH_ADMIN})
+    public ApiResponse<StudyResource> createTopic(@RequestBody StudyResource topic) {
+        // 新建时强制使用当前登录用户ID，避免前端传空字符串导致FK约束失败
+        topic.setCreatedBy(UserContext.getUserId());
+        return ApiResponse.success("创建成功", studyService.createTopic(topic));
+    }
+
+    /**
+     * 更新专题目录
+     */
+    @PutMapping("/topics/{id}")
+    @RequireRole({Role.ADMIN, Role.BRANCH_ADMIN})
+    public ApiResponse<StudyResource> updateTopic(@PathVariable String id, @RequestBody StudyResource topic) {
+        return ApiResponse.success("更新成功", studyService.updateTopic(id, topic));
+    }
+
+    /**
+     * 删除专题目录
+     */
+    @DeleteMapping("/topics/{id}")
+    @RequireRole({Role.ADMIN, Role.BRANCH_ADMIN})
+    public ApiResponse<Void> deleteTopic(@PathVariable String id) {
+        studyService.deleteTopic(id);
+        return ApiResponse.success("删除成功", null);
+    }
+
+    // ===== 资源 API =====
 
     @PostMapping("/resources")
     @RequireRole({Role.ADMIN, Role.BRANCH_ADMIN})
@@ -112,6 +163,34 @@ public class StudyController {
             return ApiResponse.success(progress);
         } catch (Exception e) {
             return ApiResponse.error("获取学习进度失败");
+        }
+    }
+
+    /**
+     * 获取当前用户的学习状态分布（扇形图数据）
+     */
+    @GetMapping("/my-distribution")
+    public ApiResponse<Map<String, Object>> getMyLearningDistribution() {
+        try {
+            String userId = UserContext.getUserId();
+            Map<String, Object> distribution = studyService.getUserLearningDistribution(userId);
+            return ApiResponse.success(distribution);
+        } catch (Exception e) {
+            return ApiResponse.error("获取学习分布失败");
+        }
+    }
+
+    /**
+     * 获取当前用户所在支部的平均学习进度
+     */
+    @GetMapping("/branch-average")
+    public ApiResponse<Map<String, Object>> getBranchAverageProgress() {
+        try {
+            String userId = UserContext.getUserId();
+            Map<String, Object> branchAvg = studyService.getBranchAverageProgress(userId);
+            return ApiResponse.success(branchAvg);
+        } catch (Exception e) {
+            return ApiResponse.error("获取支部平均进度失败");
         }
     }
 }

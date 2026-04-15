@@ -53,137 +53,197 @@ export struct ActivityParticipantsPage {
 
   build() {
     Column() {
-      // 顶部导航栏
+      // ── 顶部导航栏 ──────────────────────────────────────
       Row() {
-        Image($rawfile('返回.png'))
-          .width(24)
-          .height(24)
-          .onClick(() => {
-            router.back();
-          })
-        Text(`${this.activityTitle} - ${this.getTypeText()}列表`)
-          .fontSize(18)
-          .fontWeight(600)
-          .fontColor('#333333')
-          .margin({ left: 12 })
-        Blank()
+        Row() {
+          Text('‹')
+            .fontSize(26)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#FFFFFF')
+            .margin({ bottom: 6 })
+        }
+        .width(36)
+        .height(36)
+        .borderRadius(18)
+        .backgroundColor('rgba(255,255,255,0.18)')
+        .justifyContent(FlexAlign.Center)
+        .alignItems(VerticalAlign.Center)
+        .onClick(() => {
+          router.back();
+        })
+
+        Column() {
+          Text(this.activityTitle)
+            .fontSize(16)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#FFFFFF')
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+          Text(this.getTypeText() + '列表')
+            .fontSize(12)
+            .fontColor('rgba(255,255,255,0.75)')
+            .margin({ top: 2 })
+        }
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+        .margin({ left: 12 })
       }
       .width('100%')
-      .padding({ left: 16, right: 16, top: 16, bottom: 16 })
-      .backgroundColor('#FFFFFF')
-      .shadow({
-        radius: 4,
-        color: '#00000010',
-        offsetX: 0,
-        offsetY: 2
+      .height(64)
+      .padding({ left: 16, right: 16 })
+      .alignItems(VerticalAlign.Center)
+      .linearGradient({
+        angle: 135,
+        colors: [['#B51F2E', 0.0], ['#8B1520', 1.0]]
       })
 
-      // 内容区域
+      // ── 人员数量摘要条 ──────────────────────────────────
+      if (!this.isLoading && this.participants.length > 0) {
+        Row() {
+          Row() {
+            Text('共')
+              .fontSize(13)
+              .fontColor('#7A6040')
+            Text(` ${this.participants.length} `)
+              .fontSize(14)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#B51F2E')
+            Text('人')
+              .fontSize(13)
+              .fontColor('#7A6040')
+          }
+        }
+        .width('100%')
+        .padding({ left: 16, right: 16, top: 10, bottom: 10 })
+        .backgroundColor('#FFF7E8')
+        .border({ width: { bottom: 1 }, color: { bottom: '#EFE7DB' } })
+      }
+
+      // ── 内容区域 ────────────────────────────────────────
       if (this.isLoading) {
         Column() {
           LoadingProgress()
-            .width(50)
-            .height(50)
-            .color('#D32F2F')
+            .width(44)
+            .height(44)
+            .color('#B51F2E')
+          Text('加载中...')
+            .fontSize(13)
+            .fontColor('#B51F2E')
+            .margin({ top: 12 })
         }
         .width('100%')
-        .height('100%')
+        .layoutWeight(1)
         .justifyContent(FlexAlign.Center)
+        .backgroundColor('#F7F4EF')
+      } else if (this.participants.length === 0) {
+        Column() {
+          Text('暂无数据')
+            .fontSize(15)
+            .fontColor('#BBBBBB')
+            .margin({ bottom: 8 })
+          Text(this.type === 'all' ? '还没有人报名' : '还没有人签到')
+            .fontSize(13)
+            .fontColor('#CCCCCC')
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .justifyContent(FlexAlign.Center)
+        .backgroundColor('#F7F4EF')
       } else {
-        if (this.participants.length === 0) {
-          Column() {
-            Image('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=empty%20state%20illustration%20for%20participants&image_size=square')
-              .width(120)
-              .height(120)
-              .margin({ bottom: 16 })
-            Text(this.type === 'all' ? '暂无参与人员' : '暂无签到人员')
-              .fontSize(16)
-              .fontColor('#999999')
-          }
-          .width('100%')
-          .height('100%')
-          .justifyContent(FlexAlign.Center)
-        } else {
-          List() {
-            ForEach(this.participants, (participant: ActivityParticipant, index: number) => {
-              ListItem() {
+        List() {
+          ForEach(this.participants, (participant: ActivityParticipant, index: number) => {
+            ListItem() {
+              Row() {
+                // 头像
+                AvatarComponent({
+                  user: {
+                    avatar: participant.avatar || '',
+                    name: participant.name || participant.username || '未知'
+                  },
+                  avatarSize: 46
+                })
+
+                // 信息区
                 Column() {
+                  // 姓名 + 签到标签
                   Row() {
-                    AvatarComponent({
-                      user: {
-                        avatar: participant.avatar || '',
-                        name: participant.name || participant.username || '未知'
-                      },
-                      avatarSize: 48
-                    })
-                    Column() {
-                      Row() {
-                        Text(participant.name || participant.username || '未知')
-                          .fontSize(16)
-                          .fontWeight(500)
-                          .fontColor('#333333')
-                        if (participant.isCheckedIn) {
-                          Text('已签到')
-                            .fontSize(12)
-                            .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-                            .backgroundColor('#E8F5E9')
-                            .fontColor('#388E3C')
-                            .borderRadius(10)
-                            .margin({ left: 12 })
-                        }
-                      }
-                      .width('100%')
-                      .margin({ bottom: 4 })
-                      Row() {
-                        Text(`支部: ${participant.branch || '未知'}`)
-                          .fontSize(14)
-                          .fontColor('#666666')
-                          .margin({ right: 16 })
-                        Text(`电话: ${participant.phone || '未知'}`)
-                          .fontSize(14)
-                          .fontColor('#666666')
-                      }
-                      .width('100%')
-                      .margin({ bottom: 4 })
-                      Row() {
-                        Text(`报名时间: ${participant.registeredAt.replace('T', ' ')}`)
-                          .fontSize(12)
-                          .fontColor('#999999')
-                      }
-                      .width('100%')
-                      .margin({ bottom: 4 })
-                      if (participant.isCheckedIn && participant.checkInTime) {
-                        Row() {
-                          Text(`签到时间: ${participant.checkInTime.replace('T', ' ')}`)
-                            .fontSize(12)
-                            .fontColor('#999999')
-                        }
-                        .width('100%')
-                      }
+                    Text(participant.name || participant.username || '未知')
+                      .fontSize(15)
+                      .fontWeight(FontWeight.Medium)
+                      .fontColor('#1F1F1F')
+                      .layoutWeight(1)
+                    if (participant.isCheckedIn) {
+                      Text('已签到')
+                        .fontSize(11)
+                        .fontColor('#2E7D32')
+                        .padding({ left: 8, right: 8, top: 3, bottom: 3 })
+                        .backgroundColor('#E6F4EA')
+                        .borderRadius(10)
+                    } else {
+                      Text('未签到')
+                        .fontSize(11)
+                        .fontColor('#999999')
+                        .padding({ left: 8, right: 8, top: 3, bottom: 3 })
+                        .backgroundColor('#F0F0F0')
+                        .borderRadius(10)
                     }
-                    .width('100%')
-                    .margin({ left: 12 })
                   }
                   .width('100%')
-                  .padding({ left: 16, right: 16, top: 16, bottom: 16 })
-                  .border({
-                    width: { bottom: 1 },
-                    color: { bottom: '#F0F0F0' }
-                  })
+                  .margin({ bottom: 4 })
+
+                  // 支部 + 电话
+                  Row() {
+                    Text(participant.branch ? `支部：${participant.branch}` : '支部：未知')
+                      .fontSize(12)
+                      .fontColor('#666666')
+                      .layoutWeight(1)
+                    Text(participant.phone ? `${participant.phone}` : '')
+                      .fontSize(12)
+                      .fontColor('#666666')
+                  }
+                  .width('100%')
+                  .margin({ bottom: 3 })
+
+                  // 报名时间
+                  Text(`报名：${participant.registeredAt.replace('T', ' ').substring(0, 16)}`)
+                    .fontSize(11)
+                    .fontColor('#AAAAAA')
+                    .width('100%')
+
+                  // 签到时间（已签到时显示）
+                  if (participant.isCheckedIn && participant.checkInTime) {
+                    Text(`签到：${participant.checkInTime.replace('T', ' ').substring(0, 16)}`)
+                      .fontSize(11)
+                      .fontColor('#AAAAAA')
+                      .width('100%')
+                      .margin({ top: 2 })
+                  }
                 }
-                .width('100%')
-                .backgroundColor('#FFFFFF')
+                .layoutWeight(1)
+                .margin({ left: 12 })
+                .alignItems(HorizontalAlign.Start)
               }
-            })
+              .width('100%')
+              .padding({ left: 16, right: 16, top: 14, bottom: 14 })
+              .backgroundColor('#FFFFFF')
+              .border({ width: { bottom: 1 }, color: { bottom: '#F0EAE0' } })
+            }
+          })
+
+          // 底部留白
+          ListItem() {
+            Column()
+              .height(24)
           }
-          .width('100%')
-          .layoutWeight(1)
-          .backgroundColor('#F8F8F8')
         }
+        .width('100%')
+        .layoutWeight(1)
+        .backgroundColor('#F7F4EF')
+        .edgeEffect(EdgeEffect.Spring)
       }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F8F8F8')
+    .backgroundColor('#F7F4EF')
   }
 }

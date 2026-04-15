@@ -22,6 +22,10 @@ public class StudyResource {
 
     private String videoUrl;
 
+    private String parentId;
+
+    private Integer sortOrder;
+
     private String createdBy;
 
     @TableField(fill = FieldFill.INSERT)

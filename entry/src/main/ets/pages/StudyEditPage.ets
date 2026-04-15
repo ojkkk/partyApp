@@ -2,6 +2,21 @@ import { StudyResource, StudyService } from '../models/StudyModel';
 import { ApiResponse } from '../models/UserModel';
 import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
+import { emitter } from '@kit.BasicServicesKit';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 设计规范（庄重红金正式风）
+//  主色        #B51F2E  绛红
+//  强调色      #D83A34  亮红
+//  金色        #C9A45C  暖金
+//  深金        #A67C2E  深金
+//  背景        #F7F4EF  米白底
+//  卡片背景    #FFFFFF  纯白
+//  文字主色    #1F1F1F  深灰黑
+//  文字副色    #666666  中灰
+//  文字弱色    #999999  浅灰
+//  分割线      #EFE7DB  暖灰金
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Entry
 @Component
@@ -15,7 +30,6 @@ export struct StudyEditPage {
   @State videoUrl: string = '';
   @State isLoading: boolean = false;
   @State isSaving: boolean = false;
-  private types = ['党史学习', '专题学习'];
 
   async saveResource() {
     if (!this.title.trim()) {
@@ -58,6 +72,7 @@ export struct StudyEditPage {
           message: '上传成功',
           duration: 2000
         });
+        emitter.emit("refreshStudy", null);
         router.back();
       } else {
         promptAction.showToast({
@@ -78,190 +93,350 @@ export struct StudyEditPage {
 
   build() {
     Column() {
-      Row() {
-        Image($rawfile('返回.png'))
-          .width(24)
-          .height(24)
-          .margin({ top:15,left: 16, right: 16 })
-          .onClick(() => {
-            router.back();
-          })
-        Text('上传学习资源')
-          .fontSize(18)
-          .fontWeight(700)
-          .margin({top:17})
+      // ===================== 【沉浸式渐变 Header】 =====================
+      Stack({ alignContent: Alignment.TopStart }) {
+        // 渐变背景
+        Column()
+          .width('100%')
+          .height('100%')
+          .linearGradient({
+            angle: 155,
+            colors: [['#D83A34', 0.0], ['#B51F2E', 0.56], ['#8E1824', 1.0]]
+          });
+
+        // 顶部金色装饰线
+        Column()
+          .width('100%')
+          .height(3)
+          .backgroundColor('#FFFFFF')
+          .opacity(0.5)
+          .position({ x: 0, y: 0 });
+
+        // 装饰圆形
+        Column()
+          .width(180)
+          .height(180)
+          .borderRadius(90)
+          .backgroundColor('#FFFFFF')
+          .opacity(0.06)
+          .position({ x: 260, y: -60 });
+
+        Column()
+          .width(100)
+          .height(100)
+          .borderRadius(50)
+          .backgroundColor('#FFFFFF')
+          .opacity(0.10)
+          .position({ x: 320, y: 20 });
+
+        // 返回按钮和标题
+        Row() {
+          Row() {
+            Text('‹')
+              .fontSize(28)
+              .fontColor('#FFFFFF')
+              .margin({ bottom: 6 })
+              .onClick(() => {
+                emitter.emit("refreshStudy", null);
+                router.back();
+              })
+          }.width(40);
+          Row() {
+            Text('上传学习资源')
+              .fontSize(20)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#FFFFFF')
+          }.flexGrow(1)
+          .justifyContent(FlexAlign.Center)
+
+          Row().width(40);
+        }
+        .padding({ left: 16, top: 16, right: 16 })
+        .width('100%')
+        .height(60)
+        .position({ x: 0, y: 0 });
       }
       .width('100%')
-      .height(56)
-      .alignItems(1)
-      .backgroundColor('#FFFFFF')
-      .borderWidth({ bottom: 1 })
-      .borderColor({ bottom: '#EEEEEE' })
+      .height(60);
 
-      if (this.isLoading) {
+      // ===================== 【表单区域】 =====================
+      Scroll() {
         Column() {
-          LoadingProgress()
-            .width(50)
-            .height(50)
+          // 标题字段
+          this.FormCard('标题', '请输入标题', true, this.title, (v: string) => {
+            this.title = v;
+          })
+
+          // 类型（固定）
+          this.TypeFixedCard()
+
+          // 学习时长
+          this.FormCardNumber('学习时长(分钟)', '请输入学习时长', true)
+
+          // 封面图片
+          this.ImageCard()
+
+          // 视频URL
+          this.FormCard('视频URL（可选）', '请输入视频URL', false, this.videoUrl, (v: string) => {
+            this.videoUrl = v;
+          })
+
+          // 内容
+          this.ContentCard()
         }
-        .width('100%')
-        .layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
-      } else {
-        Scroll() {
-          Column() {
-            Column() {
-              Text('标题')
-                .fontSize(16)
-                .fontColor('#333333')
-                .width('100%')
-                .margin({ bottom: 8 })
-              // 【关键修改 1】标题改为 TextArea，删除 multiline
-              TextArea({ text: this.title, placeholder: '请输入标题' })
-                .width('100%')
-                .height(80)
-                .onChange((value: string) => {
-                  this.title = value;
-                })
-            }
-            .width('100%')
-            .padding(16)
-            .backgroundColor('#FFFFFF')
-            .margin({ bottom: 12 })
+        .padding({ top: 12, bottom: 100 })
+      }
+      .layoutWeight(1)
+      .backgroundColor('#F7F4EF');
 
-            Column() {
-              Text('类型')
-                .fontSize(16)
-                .fontColor('#333333')
-                .width('100%')
-                .margin({ bottom: 8 })
-              Scroll() {
-                Row() {
-                  ForEach(this.types, (type: string) => {
-                    Text(type)
-                      .fontSize(14)
-                      .fontColor(this.type === type ? '#FFFFFF' : '#333333')
-                      .padding({ left: 16, right: 16, top: 8, bottom: 8 })
-                      .borderRadius(20)
-                      .backgroundColor(this.type === type ? '#D32F2F' : '#F5F5F5')
-                      .margin({ right: 8 })
-                      .onClick(() => {
-                        this.type = type;
-                      })
-                  })
-                }
-              }
-              .scrollable(ScrollDirection.Horizontal) // 【优化】使用枚举代替 magic number
-            }
-            .width('100%')
-            .padding(16)
-            .backgroundColor('#FFFFFF')
-            .margin({ bottom: 12 })
-
-            Column() {
-              Text('学习时长(分钟)')
-                .fontSize(16)
-                .fontColor('#333333')
-                .width('100%')
-                .margin({ bottom: 8 })
-              TextInput({ text: this.duration.toString(), placeholder: '请输入学习时长' })
-                .width('100%')
-                .height(48)
-                .type(InputType.Number) // 【优化】限定输入类型为数字
-                .onChange((value: string) => {
-                  this.duration = parseInt(value) || 0;
-                })
-            }
-            .width('100%')
-            .padding(16)
-            .backgroundColor('#FFFFFF')
-            .margin({ bottom: 12 })
-
-            Column() {
-              Text('封面图片')
-                .fontSize(16)
-                .fontColor('#333333')
-                .width('100%')
-                .margin({ bottom: 8 })
-
-              if (this.imageUrl) {
-                Image(this.imageUrl)
-                  .width('100%')
-                  .height(200)
-                  .objectFit(ImageFit.Cover) // 【优化】使用枚举代替 magic number
-                  .borderRadius(8)
-                  .margin({ bottom: 12 })
-              }
-
-              TextInput({ text: this.imageUrl, placeholder: '请输入图片URL地址' })
-                .width('100%')
-                .height(48)
-                .onChange((value: string) => {
-                  this.imageUrl = value;
-                })
-            }
-            .width('100%')
-            .padding(16)
-            .backgroundColor('#FFFFFF')
-            .margin({ bottom: 12 })
-
-            Column() {
-              Text('视频URL（可选）')
-                .fontSize(16)
-                .fontColor('#333333')
-                .width('100%')
-                .margin({ bottom: 8 })
-              TextInput({ text: this.videoUrl, placeholder: '请输入视频URL' })
-                .width('100%')
-                .height(48)
-                .onChange((value: string) => {
-                  this.videoUrl = value;
-                })
-            }
-            .width('100%')
-            .padding(16)
-            .backgroundColor('#FFFFFF')
-            .margin({ bottom: 12 })
-
-            Column() {
-              Text('内容')
-                .fontSize(16)
-                .fontColor('#333333')
-                .width('100%')
-                .margin({ bottom: 8 })
-              // 【关键修改 2】内容也改为 TextArea 以支持多行输入
-              TextArea({ text: this.content, placeholder: '请输入内容' })
-                .width('100%')
-                .height(100)
-                .onChange((value: string) => {
-                  this.content = value;
-                })
-            }
-            .width('100%')
-            .padding(16)
-            .backgroundColor('#FFFFFF')
-            .margin({ bottom: 12 })
-          }
-          .padding({ top: 12, bottom: 12 })
-        }
-        .layoutWeight(1)
-        .backgroundColor('#F5F5F5')
-
-        Button(this.isSaving ? '上传中...' : '上传')
+      // ===================== 【悬浮保存按钮】 =====================
+      Stack({ alignContent: Alignment.Bottom }) {
+        Button(this.isSaving ? '上传中...' : '确认上传')
           .width('90%')
-          .height(48)
+          .height(50)
           .fontSize(16)
+          .fontWeight(FontWeight.Bold)
           .fontColor('#FFFFFF')
-          .backgroundColor('#D32F2F')
-          .borderRadius(8)
-          .margin({ top: 16, bottom: 16 })
+          .linearGradient({
+            angle: 90,
+            colors: [['#D83A34', 0.0], ['#B51F2E', 1.0]]
+          })
+          .borderRadius(25)
+          .shadow({
+            radius: 12,
+            color: '#B51F2E35',
+            offsetX: 0,
+            offsetY: 4
+          })
+          .margin({ bottom: 20 })
           .enabled(!this.isSaving)
           .onClick(() => {
             this.saveResource();
-          })
+          });
       }
+      .width('100%')
+      .backgroundColor('#F7F4EF');
     }
     .width('100%')
     .height('100%')
+    .backgroundColor('#F7F4EF');
+  }
+
+  // ===================== 【表单卡片 Builder】 =====================
+  @Builder
+  FormCard(label: string, placeholder: string, required: boolean, value: string, onChange: (v: string) => void) {
+    Column() {
+      Row() {
+        Row()
+          .width(4)
+          .height(16)
+          .borderRadius(2)
+          .backgroundColor('#B51F2E')
+          .margin({ right: 8 });
+        Text(label)
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#1F1F1F');
+        if (required) {
+          Text('*')
+            .fontSize(15)
+            .fontColor('#D83A34')
+            .margin({ left: 4 });
+        }
+      }
+      .alignItems(VerticalAlign.Center)
+      .margin({ left: -4, bottom: 10 });
+
+      TextArea({ text: value, placeholder: placeholder })
+        .width('100%')
+        .height(80)
+        .backgroundColor('#FAFAFA')
+        .borderRadius(10)
+        .padding(12)
+        .fontColor('#1F1F1F')
+        .placeholderColor('#999999')
+        .onChange(onChange);
+    }
+    .width('100%')
+    .padding(16)
+    .backgroundColor('#FFFFFF')
+    .borderRadius(14)
+    .border({ width: 1, color: '#EFE7DB' })
+    .margin({ left: 12, right: 12, bottom: 12 });
+  }
+
+  // ===================== 【数字输入卡片 Builder】 =====================
+  @Builder
+  FormCardNumber(label: string, placeholder: string, required: boolean) {
+    Column() {
+      Row() {
+        Row()
+          .width(4)
+          .height(16)
+          .borderRadius(2)
+          .backgroundColor('#B51F2E')
+          .margin({ right: 8 });
+        Text(label)
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#1F1F1F');
+        if (required) {
+          Text('*')
+            .fontSize(15)
+            .fontColor('#D83A34')
+            .margin({ left: 4 });
+        }
+      }
+      .alignItems(VerticalAlign.Center)
+      .margin({ left: -4, bottom: 10 });
+
+      TextInput({ text: this.duration.toString(), placeholder: placeholder })
+        .width('100%')
+        .height(48)
+        .type(InputType.Number)
+        .backgroundColor('#FAFAFA')
+        .borderRadius(10)
+        .padding({ left: 12, right: 12 })
+        .fontColor('#1F1F1F')
+        .placeholderColor('#999999')
+        .onChange((value: string) => {
+          this.duration = parseInt(value) || 0;
+        });
+    }
+    .width('100%')
+    .padding(16)
+    .backgroundColor('#FFFFFF')
+    .borderRadius(14)
+    .border({ width: 1, color: '#EFE7DB' })
+    .margin({ left: 12, right: 12, bottom: 12 });
+  }
+
+  // ===================== 【固定类型显示卡片 Builder】 =====================
+  @Builder
+  TypeFixedCard() {
+    Column() {
+      Row() {
+        Row()
+          .width(4)
+          .height(16)
+          .borderRadius(2)
+          .backgroundColor('#B51F2E')
+          .margin({ right: 8 });
+        Text('类型')
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#1F1F1F');
+      }
+      .alignItems(VerticalAlign.Center)
+      .margin({ left: -4, bottom: 10 });
+
+      Row() {
+        Text('党史学习')
+          .fontSize(14)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#FFFFFF')
+          .padding({ left: 20, right: 20, top: 10, bottom: 10 })
+          .borderRadius(20)
+          .backgroundColor('#B51F2E')
+          .border({ width: 1, color: '#B51F2E' });
+      }
+    }
+    .width('100%')
+    .padding(16)
+    .backgroundColor('#FFFFFF')
+    .borderRadius(14)
+    .border({ width: 1, color: '#EFE7DB' })
+    .margin({ left: 12, right: 12, bottom: 12 });
+  }
+
+  // ===================== 【图片卡片 Builder】 =====================
+  @Builder
+  ImageCard() {
+    Column() {
+      Row() {
+        Row()
+          .width(4)
+          .height(16)
+          .borderRadius(2)
+          .backgroundColor('#B51F2E')
+          .margin({ right: 8 });
+        Text('封面图片')
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#1F1F1F');
+      }
+      .alignItems(VerticalAlign.Center)
+      .margin({ left: -4, bottom: 10 });
+
+      if (this.imageUrl) {
+        Image(this.imageUrl)
+          .width('100%')
+          .height(180)
+          .objectFit(ImageFit.Cover)
+          .borderRadius(12)
+          .margin({ bottom: 12 });
+      }
+
+      TextInput({ text: this.imageUrl, placeholder: '请输入图片URL地址' })
+        .width('100%')
+        .height(48)
+        .backgroundColor('#FAFAFA')
+        .borderRadius(10)
+        .padding({ left: 12, right: 12 })
+        .fontColor('#1F1F1F')
+        .placeholderColor('#999999')
+        .onChange((value: string) => {
+          this.imageUrl = value;
+        });
+    }
+    .width('100%')
+    .padding(16)
+    .backgroundColor('#FFFFFF')
+    .borderRadius(14)
+    .border({ width: 1, color: '#EFE7DB' })
+    .margin({ left: 12, right: 12, bottom: 12 });
+  }
+
+  // ===================== 【内容卡片 Builder】 =====================
+  @Builder
+  ContentCard() {
+    Column() {
+      Row() {
+        Row()
+          .width(4)
+          .height(16)
+          .borderRadius(2)
+          .backgroundColor('#B51F2E')
+          .margin({ right: 8 });
+        Text('内容')
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#1F1F1F');
+        Text('*')
+          .fontSize(15)
+          .fontColor('#D83A34')
+          .margin({ left: 4 });
+      }
+      .alignItems(VerticalAlign.Center)
+      .margin({ left: -4, bottom: 10 });
+
+      TextArea({ text: this.content, placeholder: '请输入内容' })
+        .width('100%')
+        .height(120)
+        .backgroundColor('#FAFAFA')
+        .borderRadius(10)
+        .padding(12)
+        .fontColor('#1F1F1F')
+        .placeholderColor('#999999')
+        .onChange((value: string) => {
+          this.content = value;
+        });
+    }
+    .width('100%')
+    .padding(16)
+    .backgroundColor('#FFFFFF')
+    .borderRadius(14)
+    .border({ width: 1, color: '#EFE7DB' })
+    .margin({ left: 12, right: 12, bottom: 12 });
   }
 }

@@ -8,6 +8,7 @@ D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\cont
 D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\controller\ActivityController.java
 D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\controller\UserController.java
 D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\entity\BranchApplicationMessage.java
+D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\dto\StudyTopicDTO.java
 D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\interceptor\AuthInterceptor.java
 D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\controller\StudyController.java
 D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\dto\ApplyForBranchRequest.java
@@ -36,6 +37,7 @@ D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\enti
 D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\controller\DuesController.java
 D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\mapper\StudyProgressMapper.java
 D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\mapper\DuesMapper.java
+D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\dto\ChangePasswordRequest.java
 D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\entity\PolicyComment.java
 D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\dto\ActivityCreateRequest.java
 D:\DevEcoStudioProjects\partyapp\backend\src\main\java\com\example\partyapp\entity\BranchApplication.java

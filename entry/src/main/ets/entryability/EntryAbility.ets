@@ -27,7 +27,7 @@ export default class EntryAbility extends UIAbility {
 
     StorageService.init(this.context);
     const token: string | null = await StorageService.getItemAsync<string>('token');
-    
+
     if (token) {
       windowStage.loadContent('pages/Index', (err) => {
         if (err.code) {
@@ -35,7 +35,6 @@ export default class EntryAbility extends UIAbility {
           return;
         }
         hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
-
       });
     } else {
       windowStage.loadContent('pages/LoginPage', (err) => {
@@ -44,9 +43,7 @@ export default class EntryAbility extends UIAbility {
           return;
         }
         hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the login page.');
-
       });
-
     }
   }
 
